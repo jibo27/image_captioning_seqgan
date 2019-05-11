@@ -392,7 +392,6 @@ class Generator(torch.nn.Module):
                 captions.append(caption)
         
         caption = captions[0]
-        print('captions:', captions)
 
         if translate_flag:
             return self.translate(caption, vocab) # string: <sos> a man ... tree . # no <eos>, but contains <sos>
@@ -400,6 +399,7 @@ class Generator(torch.nn.Module):
             if img_path is not None:
                 return caption # list, contains <eos> index
             else:
+                print('captions:', captions)
                 return captions
 
             
