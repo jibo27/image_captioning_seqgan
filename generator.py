@@ -396,7 +396,10 @@ class Generator(torch.nn.Module):
         if translate_flag:
             return self.translate(caption, vocab) # string: <sos> a man ... tree . # no <eos>, but contains <sos>
         else:
-            return caption # list, contains <eos> index
+            if img_path is not None:
+                return caption # list, contains <eos> index
+            else:
+                return captions
 
             
 
