@@ -2,7 +2,7 @@ import torch
 
 dataset_dir = '/content/'
 image_dir = 'data/resized2014'
-caption_path = dataset_dir + 'data/annotations/captions_train2014.json'
+caption_path = dataset_dir + 'annotations/captions_train2014.json'
 encoder_path = 'data/encoder_params.pkl'
 decoder_path = 'data/decoder_params.pkl'
 vocab_path = 'data/vocab.pkl'

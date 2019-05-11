@@ -11,17 +11,19 @@ chmod +x download.sh
 ./download.sh
 ```
 
-2. Preprocess data
+2. Configure `settings.py`
+
+3. Preprocess data
 ```
 python build_vocab.py # produce vocab.pkl file
 python resize.py # resize the image for ResNet
 ```
-3. Train the model
+4. Train the model
 ```
 python train.py
 ```
 
-4. Evaluate model
+5. Evaluate model
 ```
 python sample.py
 ```
