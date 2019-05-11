@@ -360,7 +360,7 @@ class Generator(torch.nn.Module):
         return ' '.join(sentences)
  
 
-    def inference(self, vocab, img_path=None, features=None, translate_flag=True):
+    def inference(self, vocab, img_path=None, features=None, translate_flag=False):
         '''
             Generate captions from image path.
             img_path: string. Fullname of the path of the image
