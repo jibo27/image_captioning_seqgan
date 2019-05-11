@@ -399,7 +399,6 @@ class Generator(torch.nn.Module):
             if img_path is not None:
                 return caption # list, contains <eos> index
             else:
-                print('captions:', captions)
                 return captions
 
             

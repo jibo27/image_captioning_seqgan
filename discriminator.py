@@ -106,7 +106,6 @@ class Discriminator(torch.nn.Module):
                 features = features.view(features.size(0), -1, features.size(-1))
                 captions_pred = generator.inference(vocab, features=features) # list, (batch_size, var_length). eg: [[1, 4, ... , 19, 2]], containing <sos> and <eos>
                 # sort captions_pred, features
-                print('captions_pred:', captions_pred)
                 sorted_indices, captions_pred = zip(*sorted(enumerate(captions_pred), key=lambda x: len(x[1]), reverse=True))
                 sorted_indices = list(sorted_indices)
                 captions_pred = list(captions_pred)
@@ -115,10 +114,7 @@ class Discriminator(torch.nn.Module):
 
                 lengths_pred = [len(caption_pred) for caption_pred in captions_pred]
                 max_length_pred = lengths_pred[0]
-                print('captions_pred:', captions_pred)
                 for index, caption_pred in enumerate(captions_pred):
-                    print('caption_pred:', caption_pred)
-                    print('max_length_pred:', max_length_pred)
                     captions_pred[index] = caption_pred + [0] * (max_length_pred - len(caption_pred))
                 
                 captions_pred = torch.LongTensor(captions_pred).to(device)
