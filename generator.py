@@ -129,23 +129,27 @@ class Decoder(torch.nn.Module):
         return y_predicted, captions, decoder_lengths, alphas # Return decoder_lengths to replace the original lengths!!! It is every important beacause 1. we do not consider the output of <eos> 2. avoid the bug of 'RuntimeError: select(): index 25 out of range for tensor of size [25, 32, 9956] at dimension 0'
 
 
-    def generate(self, features, sos_idx, max_length=30, device='cuda'):
+    def inference(self, features, pre_input, max_length=30, device='cuda'):
         '''
-            features: (enc_image_size, enc_image_size, encoder_dim)
-            sos_idx: index of <sos>
+            Input:
+                features: (enc_image_size, enc_image_size, encoder_dim)
+                sos_idx: index of <sos>
+                pre_input: (pre_length, ): list. e.g., [sos_idx] / [sos_idx, xx_idx, ...]
+            Output:
+                captions: (batch_size, max_length)
         '''
         max_length -= 1 # adjust
         # flatten features
         features = features.view(1, -1, features.size(-1)) # (batch_size, num_pixels, encoder_dim)
-        
+
         # embedding
-        inputs = self.embeddings(torch.Tensor([sos_idx]).long().to(device)) # (batch_size=1, embedding_size)
+        #inputs = self.embeddings(torch.Tensor([sos_idx]).long().to(device)) # (batch_size=1, embedding_size)
+        embeddings = self.embeddings(torch.LongTensor(pre_input).unsqueeze(0).to(device)) # (batch_size=1, pre_length, embedding_size)
 
         # initialize LSTM states
         mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
         hidden_state = self.h_fc(mean_features) # (batch_size, lstm_size)
         cell_state = self.c_fc(mean_features) # (batch_size, lstm_size)
-
 
         #############################################
         # Run LSTM
@@ -153,6 +157,7 @@ class Decoder(torch.nn.Module):
         batch_size = features.size(0)
         num_pixels = features.size(1)
         captions = list()
+        inputs = embeddings[:, 0, :]
         for step in range(max_length):
             # get attention
             attention_weighted_encoding, alpha = self.attention(features, hidden_state) # (curr_batch_size, encoder_dim)
@@ -163,12 +168,15 @@ class Decoder(torch.nn.Module):
 
             _, y_pred = y_pred.max(1)
             captions.append(y_pred)
-            inputs = self.embeddings(y_pred)
+            if step + 1 >= pre_length:
+                inputs = self.embeddings(y_pred)
+            else:
+                inputs = embeddings[:, step, :]
         captions = torch.stack(captions, 1)
 
         return captions
 
-    def generate_beamsearch(self, features, sos_idx, eos_idx, beam_size=20, max_length=30, all_captions=False, device='cuda'):
+    def inference_beamsearch(self, features, sos_idx, eos_idx, beam_size=20, max_length=30, all_captions=False, device='cuda'):
         '''
             features: (1, enc_image_size, enc_image_size, encoder_dim)
             sos_idx: index of <sos>
@@ -352,25 +360,37 @@ class Generator(torch.nn.Module):
         return ' '.join(sentences)
  
 
-    def generate(self, img_path, vocab, translate_flag=True):
+    def inference(self, vocab, img_path=None, features=None, translate_flag=True):
         '''
             Generate captions from image path.
             img_path: string. Fullname of the path of the image
         '''
-        # ---------------------- Preprocess images -------------------------------
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        transforms = T.Compose([
-            T.ToTensor(),
-            T.Normalize((0.485, 0.456, 0.406),
-                        (0.229, 0.224, 0.225))])
-        img = Image.open(img_path)
-        imgs = transforms(img).to(device).unsqueeze(0)
+        # ---------------------- Preprocess images -------------------------------
+        if img_path:
+            transforms = T.Compose([
+                T.ToTensor(),
+                T.Normalize((0.485, 0.456, 0.406),
+                            (0.229, 0.224, 0.225))])
+            img = Image.open(img_path)
+            imgs = transforms(img).to(device).unsqueeze(0)
 
-        with torch.no_grad():
-            features = self.encoder(imgs)
+            with torch.no_grad():
+                features = self.encoder(imgs)
+        elif features:
+            pass
+        else:
+            print('ERROR:inference')
+            return None
 
         # ---------------------- Generate captions from image features -------------------------------
-        captions = self.sample(features, vocab) # (batch_size, seq_length)
+        #captions = self.sample(features, vocab) # (batch_size, seq_length)
+        captions = list()
+        with torch.no_grad(): # Avoid accumulating gradients which might result in out of memory
+            for feature in features:
+                caption = self.decoder.inference_beamsearch(feature.unsqueeze(0), vocab.word2idx['<sos>'], vocab.word2idx['<eos>'], all_captions=False)
+                captions.append(caption)
+        
         caption = captions[0]
 
         if translate_flag:
@@ -379,15 +399,6 @@ class Generator(torch.nn.Module):
             return caption # list, contains <eos> index
 
             
-    def sample(self, features, vocab):
-        captions = list()
-        with torch.no_grad(): # Avoid accumulating gradients which might result in out of memory
-            for feature in features:
-                caption = self.decoder.generate_beamsearch(feature.unsqueeze(0), vocab.word2idx['<sos>'], vocab.word2idx['<eos>'], all_captions=False)
-                captions.append(caption)
-        
-        return captions # (batch_size, seq_length), containing <sos> and <eos>
-
 
     def ad_train(self, dataloader, discriminator, vocab, num_epochs, num_batches=None, alpha_c=1.0):
 
@@ -405,7 +416,9 @@ class Generator(torch.nn.Module):
                 batch_size = features.size(0)
                 num_pixels = features.size(1)
 
-                captions_pred = self.sample(features, vocab)
+                #------------------------ Predict Captions -------------------------
+                # Perhaps we should not use beamsearch???
+                captions_pred = self.inference(vocab, features=features)
                 # sort features and captions_pred based on the length of captions_pred
                 sorted_indices, captions_pred = zip(*sorted(enumerate(captions_pred), key=lambda x: len(x[1]), reverse=True))
                 sorted_indices = list(sorted_indices)
@@ -419,16 +432,14 @@ class Generator(torch.nn.Module):
                     captions_pred[index] = caption_pred + [0] * (max_length_pred - len(caption_pred))
                 captions_pred = torch.LongTensor(captions_pred).to(device)
 
+                #------------------------ Estimate Rewards -------------------------
                 rewards = discriminator.predict(features, captions_pred, lengths_pred, device) # (batch_size,)
 
                 mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
                 hidden_state = self.decoder.h_fc(mean_features) # (batch_size, lstm_size)
                 cell_state = self.decoder.c_fc(mean_features) # (batch_size, lstm_size)
 
-
-                #############################################
-                # Run LSTM
-                #############################################
+                # ------------------- Run LSTM --------------------------
                 decoder_lengths = [length_pred - 1 for length_pred in lengths_pred]
 
                 y_predicted = torch.zeros(batch_size, max(decoder_lengths), self.vocab_size).to(device)
@@ -439,12 +450,12 @@ class Generator(torch.nn.Module):
                     curr_batch_size = sum([l > step for l in decoder_lengths])
 
                     # get attention_weighted_encoding
-                    attention_weighted_encoding, _ = self.decoder.attention(features[:curr_batch_size], hidden_state[:curr_batch_size]) # (curr_batch_size, encoder_dim)
+                    awe, _ = self.decoder.attention(features[:curr_batch_size], hidden_state[:curr_batch_size]) # (curr_batch_size, encoder_dim)
                     gate = self.decoder.sigmoid(self.decoder.f_beta(hidden_state[:curr_batch_size])) # (curr_batch_size, encoder_dim)
-                    attention_weighted_encoding = gate * attention_weighted_encoding # (curr_batch_size, encoder_dim)
+                    awe = gate * awe # (curr_batch_size, encoder_dim)
 
                     # run rnn cell
-                    hidden_state, cell_state = self.decoder.rnn_cell(torch.cat([inputs[:curr_batch_size, :], attention_weighted_encoding], dim=1), (hidden_state[:curr_batch_size], cell_state[:curr_batch_size]))
+                    hidden_state, cell_state = self.decoder.rnn_cell(torch.cat([inputs[:curr_batch_size, :], awe], dim=1), (hidden_state[:curr_batch_size], cell_state[:curr_batch_size]))
                     
                     y_pred = self.decoder.classifier(self.decoder.dropout(hidden_state)) # (curr_batch_size, vocab_size)
                     y_predicted[:curr_batch_size, step, :] = y_pred
