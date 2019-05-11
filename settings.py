@@ -1,9 +1,13 @@
 import torch 
 
+dataset_dir = '/content/'
 image_dir = 'data/resized2014'
-caption_path = 'data/annotations/captions_train2014.json'
-batch_size = 32
+caption_path = dataset_dir + 'data/annotations/captions_train2014.json'
+encoder_path = 'data/encoder_params.pkl'
+decoder_path = 'data/decoder_params.pkl'
 vocab_path = 'data/vocab.pkl'
+
+batch_size = 32
 num_workers = 2
 crop_size = 224
 #embedding_size = 256 # May 5, 2019
@@ -12,8 +16,6 @@ lstm_size = 512 # "Show and Tell A Neural Image Caption Generator" used 512 dime
 learning_rate = 1e-3
 log_every = 10
 num_epochs = 100
-encoder_path = 'data/encoder_params.pkl'
-decoder_path = 'data/decoder_params.pkl'
 save_every = 100
 alpha_c = 1.0 
 attention_dim = 512

@@ -4,6 +4,7 @@ import argparse
 from collections import Counter
 from pycocotools.coco import COCO
 
+from settings import *
 
 class Vocabulary(object):
     """Simple vocabulary wrapper."""
@@ -55,7 +56,8 @@ def build_vocab(caption_path, min_count):
     return vocab
 
 def main(args):
-    vocab = build_vocab(caption_path=args.caption_path, min_count=args.min_count)
+    #vocab = build_vocab(caption_path=args.caption_path, min_count=args.min_count)
+    vocab = build_vocab(caption_path=caption_path, min_count=args.min_count)
     vocab_path = args.vocab_path
     with open(vocab_path, 'wb') as f: # vocab: Vocabulay object that contains idx2word, word2idx.
         pickle.dump(vocab, f)
@@ -65,9 +67,9 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--caption_path', type=str, 
-                        default='data/annotations/captions_train2014.json', 
-                        help='path for train annotation file')
+#    parser.add_argument('--caption_path', type=str, 
+#                        default='data/annotations/captions_train2014.json', 
+#                        help='path for train annotation file')
     parser.add_argument('--vocab_path', type=str, default='./data/vocab.pkl', 
                         help='path for saving vocabulary wrapper')
     parser.add_argument('--min_count', type=int, default=4, 
