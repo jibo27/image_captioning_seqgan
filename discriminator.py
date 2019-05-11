@@ -104,7 +104,7 @@ class Discriminator(torch.nn.Module):
 
                 features = generator.encoder(imgs)
                 features = features.view(features.size(0), -1, features.size(-1))
-                captions_pred = generator.sample(features, vocab) # list, (batch_size, var_length). eg: [[1, 4, ... , 19, 2]], containing <sos> and <eos>
+                captions_pred = generator.inference(features, vocab) # list, (batch_size, var_length). eg: [[1, 4, ... , 19, 2]], containing <sos> and <eos>
                 # sort captions_pred, features
                 sorted_indices, captions_pred = zip(*sorted(enumerate(captions_pred), key=lambda x: len(x[1]), reverse=True))
                 sorted_indices = list(sorted_indices)
