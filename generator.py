@@ -392,6 +392,7 @@ class Generator(torch.nn.Module):
                 captions.append(caption)
         
         caption = captions[0]
+        print('captions:', captions)
 
         if translate_flag:
             return self.translate(caption, vocab) # string: <sos> a man ... tree . # no <eos>, but contains <sos>

@@ -114,6 +114,7 @@ class Discriminator(torch.nn.Module):
 
                 lengths_pred = [len(caption_pred) for caption_pred in captions_pred]
                 max_length_pred = lengths_pred[0]
+                print('caption_pred:', captions_pred)
                 for index, caption_pred in enumerate(captions_pred):
                     print('caption_pred:', caption_pred)
                     print('max_length_pred:', max_length_pred)
