@@ -367,7 +367,7 @@ class Generator(torch.nn.Module):
         '''
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # ---------------------- Preprocess images -------------------------------
-        if img_path:
+        if img_path is not None:
             transforms = T.Compose([
                 T.ToTensor(),
                 T.Normalize((0.485, 0.456, 0.406),
@@ -377,7 +377,7 @@ class Generator(torch.nn.Module):
 
             with torch.no_grad():
                 features = self.encoder(imgs)
-        elif features:
+        elif features is not None:
             pass
         else:
             print('ERROR:inference')
