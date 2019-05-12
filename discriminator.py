@@ -12,7 +12,7 @@ from generator import Attention
 from settings import *
 
 class Discriminator(torch.nn.Module):
-    def __init__(self, vocab_size, embedding_size, hidden_size, attention_dim, encoder_dim=2048, dropout=0.2, discriminator_path=discriminator_path):
+    def __init__(self, vocab_size, embedding_size, hidden_size, attention_dim, encoder_dim=2048, dropout=0.2, discriminator_path=discriminator_path, load=False):
         super(Discriminator, self).__init__()
 
         self.embeddings = nn.Embedding(vocab_size, embedding_size)
@@ -36,7 +36,7 @@ class Discriminator(torch.nn.Module):
         self.log_every = 10
         self.save_every = 100
         self.discriminator_path = discriminator_path
-        if os.path.exists(self.discriminator_path):
+        if load and os.path.exists(self.discriminator_path):
             print('Start loading discriminator')
             self.load_state_dict(torch.load(self.discriminator_path))
 

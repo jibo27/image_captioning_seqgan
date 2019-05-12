@@ -273,7 +273,7 @@ class Decoder(torch.nn.Module):
 
 
 class Generator(torch.nn.Module):
-    def __init__(self, attention_dim, embedding_size, lstm_size, vocab_size, encoder_dim=2048, generator_path = 'data/generator_params.pkl', ad_generator_path='data/ad_generator_params.pkl', load_ad=False):
+    def __init__(self, attention_dim, embedding_size, lstm_size, vocab_size, encoder_dim=2048, generator_path = 'data/generator_params.pkl', ad_generator_path='data/ad_generator_params.pkl', load='pre'):
         super(Generator, self).__init__()
 
         # ------------- constants ----------------
@@ -297,10 +297,10 @@ class Generator(torch.nn.Module):
         # ------------- load model ----------------
         self.generator_path = generator_path
         self.ad_generator_path = ad_generator_path
-        if not load_ad and os.path.exists(self.generator_path):
+        if load == 'pre' and os.path.exists(self.generator_path):
             print('Start loading pre_generator')
             self.load_state_dict(torch.load(self.generator_path))
-        elif load_ad and os.path.exists(self.ad_generator_path):
+        elif load == 'ad' and os.path.exists(self.ad_generator_path):
             print('Start loading ad_generator')
             self.load_state_dict(torch.load(self.ad_generator_path))
 

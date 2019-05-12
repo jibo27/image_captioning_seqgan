@@ -29,11 +29,11 @@ def main(args):
                             crop_size,
                             shuffle=True, num_workers=num_workers)
 
-    generator = Generator(attention_dim, embedding_size, lstm_size, vocab_size)
+    generator = Generator(attention_dim, embedding_size, lstm_size, vocab_size, load='pre')
     generator = generator.to(device)
     generator = generator.train()
 
-    discriminator = Discriminator(vocab_size, embedding_size, lstm_size, attention_dim)
+    discriminator = Discriminator(vocab_size, embedding_size, lstm_size, attention_dim, load=True)
     discriminator = discriminator.to(device)
     discriminator = discriminator.train()
 
