@@ -324,8 +324,10 @@ class Generator(torch.nn.Module):
 
             targets = captions[:, 1:]
 
-            y_predicted, _ = pack_padded_sequence(y_predicted, lengths, batch_first=True)
-            targets, _ = pack_padded_sequence(targets, lengths, batch_first=True)
+            #y_predicted, _ = pack_padded_sequence(y_predicted, lengths, batch_first=True)
+            y_predicted = pack_padded_sequence(y_predicted, lengths, batch_first=True)[0]
+            #targets, _ = pack_padded_sequence(targets, lengths, batch_first=True)
+            targets = pack_padded_sequence(targets, lengths, batch_first=True)[0]
 
             loss = self.loss_fn(y_predicted, targets)
             loss += alpha_c * ((1.0 - alphas.sum(dim=1)) ** 2).mean()
