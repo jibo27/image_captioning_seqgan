@@ -17,7 +17,7 @@ from discriminator import Discriminator
 from settings import *
 
 
-def train():
+def main(args):
     with open(vocab_path, 'rb') as f:
         vocab = pickle.load(f)
 
@@ -38,11 +38,17 @@ def train():
     discriminator = discriminator.train()
 
 
-
-    for i in range(5):
+    
+    if args.pre_train == 'gd':
+        generator.pre_train(dataloader, vocab)
+        discriminator.pre_train(generator, dataloader, vocab)
+    elif args.pre_train == 'dg':
         discriminator.pre_train(generator, dataloader, vocab)
         generator.pre_train(dataloader, vocab)
-
+    elif args.pre_train == 'd':
+        discriminator.pre_train(generator, dataloader, vocab)
+    elif args.pre_train == 'g':
+        generator.pre_train(dataloader, vocab)
 
 #    for i in range(5):
 #        print("D")
@@ -51,5 +57,11 @@ def train():
 #        generator.ad_train(dataloader, discriminator, vocab, num_batches=20, alpha_c=1.0)
 
     
-train()
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--pre_train', type=str, default='gd', help='mode of pre-train')
+    args = parser.parse_args()
+    main(args)
 
