@@ -91,59 +91,58 @@ class Discriminator(torch.nn.Module):
         return y_predicted
 
 
-    def pre_train(self, generator, dataloader, num_epochs, vocab, num_batches=None, alpha_c=1.0):
+    def pre_train(self, generator, dataloader, vocab, num_batches=None, alpha_c=1.0):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         num_steps = len(dataloader)
 
-        for epoch in range(num_epochs):
-            for step, (imgs, captions, lengths) in enumerate(dataloader):
-                imgs = imgs.to(device)
-                captions = captions.to(device) # (batch_size, batch_max_length)
+        for step, (imgs, captions, lengths) in enumerate(dataloader):
+            imgs = imgs.to(device)
+            captions = captions.to(device) # (batch_size, batch_max_length)
 
-                batch_size = captions.size(0)
+            batch_size = captions.size(0)
 
-                features = generator.encoder(imgs)
-                features = features.view(features.size(0), -1, features.size(-1))
-                captions_pred = generator.inference(vocab, features=features) # list, (batch_size, var_length). eg: [[1, 4, ... , 19, 2]], containing <sos> and <eos>
-                # sort captions_pred, features
-                sorted_indices, captions_pred = zip(*sorted(enumerate(captions_pred), key=lambda x: len(x[1]), reverse=True))
-                sorted_indices = list(sorted_indices)
-                captions_pred = list(captions_pred)
-                sorted_features = features[list(sorted_indices)]
+            features = generator.encoder(imgs)
+            features = features.view(features.size(0), -1, features.size(-1))
+            captions_pred = generator.inference(vocab, features=features) # list, (batch_size, var_length). eg: [[1, 4, ... , 19, 2]], containing <sos> and <eos>
+            # sort captions_pred, features
+            sorted_indices, captions_pred = zip(*sorted(enumerate(captions_pred), key=lambda x: len(x[1]), reverse=True))
+            sorted_indices = list(sorted_indices)
+            captions_pred = list(captions_pred)
+            sorted_features = features[list(sorted_indices)]
 
 
-                lengths_pred = [len(caption_pred) for caption_pred in captions_pred]
-                max_length_pred = lengths_pred[0]
-                for index, caption_pred in enumerate(captions_pred):
-                    captions_pred[index] = caption_pred + [0] * (max_length_pred - len(caption_pred))
-                
-                captions_pred = torch.LongTensor(captions_pred).to(device)
-                #lengths_pred = list()
-                #for i in range(batch_size):
-                    #lengths_pred = len(captions_pred[i]) if len(tmp_captions_pred[i]) < captions.size(1) else captions.size(1)
+            lengths_pred = [len(caption_pred) for caption_pred in captions_pred]
+            max_length_pred = lengths_pred[0]
+            for index, caption_pred in enumerate(captions_pred):
+                captions_pred[index] = caption_pred + [0] * (max_length_pred - len(caption_pred))
+            
+            captions_pred = torch.LongTensor(captions_pred).to(device)
+            #lengths_pred = list()
+            #for i in range(batch_size):
+                #lengths_pred = len(captions_pred[i]) if len(tmp_captions_pred[i]) < captions.size(1) else captions.size(1)
 
-                #captions, _ = pack_padded_sequence(captions, lengths, batch_first=True)
+            #captions, _ = pack_padded_sequence(captions, lengths, batch_first=True)
 
-                #captions_pred, _ = pack_padded_sequence(captions_pred, max_lengths_pred, batch_first=True)
-                
-                batch_size = features.size(0)
-                num_pixels = features.size(1)
-                
-                #-------------------------- RUN RNN ---------------------------------------
-                D_real = self.predict(features, captions, lengths, device) # (batch_size, )
-                D_fake = self.predict(sorted_features, captions_pred, lengths_pred, device) # (batch_size, )
-                loss = - torch.mean(torch.log(D_real)) - torch.mean(torch.log(1 - D_fake))
-    
-                self.optimizer.zero_grad()
-                loss.backward()
-                self.optimizer.step()
+            #captions_pred, _ = pack_padded_sequence(captions_pred, max_lengths_pred, batch_first=True)
+            
+            batch_size = features.size(0)
+            num_pixels = features.size(1)
+            
+            #-------------------------- RUN RNN ---------------------------------------
+            D_real = self.predict(features, captions, lengths, device) # (batch_size, )
+            D_fake = self.predict(sorted_features, captions_pred, lengths_pred, device) # (batch_size, )
+            loss = - torch.mean(torch.log(D_real)) - torch.mean(torch.log(1 - D_fake))
 
-                if step % self.log_every == 0:
-                    print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(epoch, num_epochs, step, num_steps, loss.item(), np.exp(loss.item())))
-                    print('mean(D_real):', torch.mean(D_real).item(), 'mean(D_fake):', torch.mean(D_fake).item())
-                if (step + 1) % self.save_every == 0:
-                    print('Start saving discriminator')
-                    torch.save(self.state_dict(), self.discriminator_path)
-                if num_batches and step + 1 >= num_batches:
-                    break
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            if step % self.log_every == 0:
+                print('Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(step, num_steps, loss.item(), np.exp(loss.item())))
+                print('mean(D_real):', torch.mean(D_real).item(), 'mean(D_fake):', torch.mean(D_fake).item())
+            if (step + 1) % self.save_every == 0:
+                print('Start saving discriminator')
+                torch.save(self.state_dict(), self.discriminator_path)
+            if num_batches and step + 1 >= num_batches:
+                break

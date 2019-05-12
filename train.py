@@ -40,15 +40,15 @@ def train():
 
 
     for i in range(5):
-        discriminator.pre_train(generator, dataloader, 1, vocab)
-        generator.pre_train(dataloader, 1, vocab)
+        discriminator.pre_train(generator, dataloader, vocab)
+        generator.pre_train(dataloader, vocab)
 
 
 #    for i in range(5):
 #        print("D")
-#        discriminator.pre_train(generator, dataloader, 1, vocab, num_batches=100)
+#        discriminator.pre_train(generator, dataloader, vocab, num_batches=100)
 #        print("G")
-#        generator.ad_train(dataloader, discriminator, vocab, 1, num_batches=20, alpha_c=1.0)
+#        generator.ad_train(dataloader, discriminator, vocab, num_batches=20, alpha_c=1.0)
 
     
 train()
