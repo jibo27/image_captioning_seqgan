@@ -5,6 +5,7 @@ caption_path = '/content/annotations/captions_train2014.json'
 encoder_path = 'data/encoder_params.pkl'
 decoder_path = 'data/decoder_params.pkl'
 vocab_path = 'data/vocab.pkl'
+discriminator_path = 'data/discriminator_params.pkl'
 
 batch_size = 32
 num_workers = 2

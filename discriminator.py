@@ -9,9 +9,10 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from generator import Attention
 
 
+from settings import *
 
 class Discriminator(torch.nn.Module):
-    def __init__(self, vocab_size, embedding_size, hidden_size, attention_dim, encoder_dim=2048, dropout=0.2, discriminator_path = 'data/discriminator_params.pkl'):
+    def __init__(self, vocab_size, embedding_size, hidden_size, attention_dim, encoder_dim=2048, dropout=0.2, discriminator_path=discriminator_path):
         super(Discriminator, self).__init__()
 
         self.embeddings = nn.Embedding(vocab_size, embedding_size)
