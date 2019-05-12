@@ -32,7 +32,7 @@ def main(args):
     fullnames = ['data/giraffe.png', 'data/surf.jpg', 'data/bedroom.jpg']
     for fullname in fullnames:
         print(fullname.split('/')[-1].split('.')[0] + ':')
-        print(generator.generate(fullname, vocab, True))
+        print(generator.inference(vocab, img_path=fullname, translate_flag=True))
         #print(caption = generator.generate(fullname, vocab, False))
 
 if __name__ == '__main__':
