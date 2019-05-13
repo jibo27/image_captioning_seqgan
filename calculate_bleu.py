@@ -62,7 +62,7 @@ def main(args):
         imgs = imgs.to(device)
 
         features = generator.encoder(imgs)
-        indices_list = generator.sample(features, vocab)
+        indices_list = generator.inference(vocab, features=features)
         for i in range(len(indices_list)):
             sentence_pred = translate(indices_list[i][1:], vocab)
             sentence = translate(captions[i][1:], vocab)
