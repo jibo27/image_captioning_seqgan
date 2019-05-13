@@ -52,6 +52,8 @@ def main(args):
         discriminator.pre_train(generator, dataloader, vocab)
     elif args.pre_train == 'g':
         generator.pre_train(dataloader, vocab)
+    elif args.pre_train == 'ad':
+        generator.ad_train(dataloader, discriminator, vocab, alpha_c=1.0)
 
 #    for i in range(5):
 #        print("D")
