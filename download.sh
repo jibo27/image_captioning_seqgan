@@ -12,9 +12,9 @@ rm ./data/captions_train-val2014.zip
 rm ./data/train2014.zip 
 rm ./data/val2014.zip 
 
-!pip install nltk
-import nltk
-nltk.download('punkt')
+pip install nltk
+python -c 'import nltk'
+python -c 'nltk.download("punkt")'
 
 git clone https://github.com/pdollar/coco.git 
 cd coco/PythonAPI 
