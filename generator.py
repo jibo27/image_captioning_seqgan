@@ -402,8 +402,63 @@ class Generator(torch.nn.Module):
             else:
                 return captions
 
-            
 
+    def estimate_rewards(self, features, captions_pred, lengths_pred): 
+        '''
+            Input:
+                ! SORT BY lengths_pred !
+                lengths_pred: including <sos> & <eos>
+            Output:
+                reward: (batch_size, decoder_lengths)
+        '''
+        mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
+        hidden_state = self.decoder.h_fc(mean_features) # (batch_size, lstm_size)
+        cell_state = self.decoder.c_fc(mean_features) # (batch_size, lstm_size)
+
+        decoder_lengths = [length_pred - 1 for length_pred in lengths_pred] # remove <eos>, since the reward at the position of <eos> does not have corresponding log_action to multiply
+
+        y_predicted = torch.zeros(batch_size, max(decoder_lengths), self.vocab_size).to(device)
+        rewards = torch.zeros(batch_size, max(decoder_lengths), self.vocab_size).to(device)
+        actions = torch.zeros(batch_size, max(decoder_lengths)).long().to(device)
+        #inputs = self.decoder.embeddings(torch.LongTensor([vocab.word2idx['<sos>']] * batch_size).to(device)) # (batch_size, embedding_size)
+
+        print('captions_pred:', captions_pred)
+        print('lengths_pred', lengths_pred)
+        
+        for step in range(max(decoder_lengths)):
+            curr_batch_size = sum([l > step for l in decoder_lengths])
+            # inputs
+            inputs = captions_pred[:curr_batch_size, :decoder_lengths[curr_batch_size]] # (curr_batch_size, decoder_lengths[curr_batch_size])
+            captions = self.decoder.inference(inputs) # (curr_batch_size, xx_len)
+            print('curr_batch_size:', curr_batch_size)
+            print('captions:', captions)
+
+
+
+
+
+
+
+            # get attention_weighted_encoding
+#            awe, _ = self.decoder.attention(features[:curr_batch_size], hidden_state[:curr_batch_size]) # (curr_batch_size, encoder_dim)
+#            gate = self.decoder.sigmoid(self.decoder.f_beta(hidden_state[:curr_batch_size])) # (curr_batch_size, encoder_dim)
+#            awe = gate * awe # (curr_batch_size, encoder_dim)
+#
+#            # run rnn cell
+#            hidden_state, cell_state = self.decoder.rnn_cell(torch.cat([inputs[:curr_batch_size, :], awe], dim=1), (hidden_state[:curr_batch_size], cell_state[:curr_batch_size]))
+#            
+#            y_pred = self.decoder.classifier(self.decoder.dropout(hidden_state)) # (curr_batch_size, vocab_size)
+#            y_predicted[:curr_batch_size, step, :] = y_pred
+#            actions[:curr_batch_size, step] = y_pred.max(1)[1] # Suppose the vocab with max prob is the correct action
+#
+#            inputs = torch.multinomial(torch.softmax(y_pred, dim=1), 1).squeeze(1) # (curr_batch_size, )
+#            inputs = self.decoder.embeddings(inputs) # (curr_batch_size, embedding_size)
+
+
+
+
+
+            
     def ad_train(self, dataloader, discriminator, vocab, num_batches=None, alpha_c=1.0):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -436,14 +491,15 @@ class Generator(torch.nn.Module):
             captions_pred = torch.LongTensor(captions_pred).to(device)
 
             #------------------------ Estimate Rewards -------------------------
-            rewards = discriminator.predict(features, captions_pred, lengths_pred, device) # (batch_size,)
+            #rewards = discriminator.predict(features, captions_pred, lengths_pred, device) # (batch_size,)
 
+            #------------------------ Initialize states for Attention -------------------------
             mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
             hidden_state = self.decoder.h_fc(mean_features) # (batch_size, lstm_size)
             cell_state = self.decoder.c_fc(mean_features) # (batch_size, lstm_size)
 
             # ------------------- Run LSTM --------------------------
-            decoder_lengths = [length_pred - 1 for length_pred in lengths_pred]
+            decoder_lengths = [length_pred - 1 for length_pred in lengths_pred] # remove <eos>
 
             y_predicted = torch.zeros(batch_size, max(decoder_lengths), self.vocab_size).to(device)
             actions = torch.zeros(batch_size, max(decoder_lengths)).long().to(device)
@@ -474,6 +530,8 @@ class Generator(torch.nn.Module):
             ad_loss = 0
             baseline = 0 # make the rewards that less than 0.5 to be negative so that the "too fake" captions are punished
             # ADVISE: If we train the discriminator, the generator reward will be decreased dramatically. For example, the initial reward was about 0.56, but it quickly becomes 0.3 after about 30 batches. So in my opinion, we should remove the baseline or reduce the baseline.
+
+            rewards = self.estimate_rewards(features, captions_pred, lengths_pred) # (batch_size, decoder_lengths)
             
             for index in range(batch_size):
                 for timestep in range(decoder_lengths[index]):
