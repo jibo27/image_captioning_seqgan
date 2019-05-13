@@ -40,8 +40,11 @@ def main(args):
 
     
     if args.pre_train == 'gd':
-        generator.pre_train(dataloader, vocab)
-        discriminator.pre_train(generator, dataloader, vocab)
+        for _ in range(5):
+            for i in range(4):
+                generator.pre_train(dataloader, vocab)
+            for i in range(1):
+                discriminator.pre_train(generator, dataloader, vocab)
     elif args.pre_train == 'dg':
         discriminator.pre_train(generator, dataloader, vocab)
         generator.pre_train(dataloader, vocab)

@@ -176,6 +176,53 @@ class Decoder(torch.nn.Module):
 
         return captions
 
+    def inference2(self, features, pre_input, max_length=30, device='cuda'):
+        '''
+            Input:
+                features: (batch_size, num_pixels, encoder_dim)
+                pre_input: (batch_size, pre_length, ): list. e.g., [sos_idx] / [sos_idx, xx_idx, ...]
+            Output:
+                captions: (batch_size, max_length)
+        '''
+        max_length -= 1 # adjust
+
+        # embedding
+        embeddings = self.embeddings(torch.LongTensor(pre_input).to(device)) # (batch_size, pre_length, embedding_size)
+
+        # initialize LSTM states
+        mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
+        hidden_state = self.h_fc(mean_features) # (batch_size, lstm_size)
+        cell_state = self.c_fc(mean_features) # (batch_size, lstm_size)
+
+        #############################################
+        # Run LSTM
+        #############################################
+        batch_size = features.size(0)
+        num_pixels = features.size(1)
+        #captions = list()
+        captions = torch.zeros((batch_size, max_length)).long().to(device)
+        inputs = embeddings[:, 0, :]
+        for step in range(max_length):
+            # get attention
+            awe, alpha = self.attention(features, hidden_state) # (curr_batch_size, encoder_dim)
+            gate = self.sigmoid(self.f_beta(hidden_state)) # (curr_batch_size, encoder_dim)
+            awe = gate * awe # (curr_batch_size, encoder_dim)
+            hidden_state, cell_state = self.rnn_cell(torch.cat([inputs, awe], dim=1), (hidden_state, cell_state))
+            y_pred = self.classifier(hidden_state)
+
+            _, y_pred = y_pred.max(1) # y_pred: (batch_size, )
+            captions[:, step] = y_pred
+            #captions.append(y_pred)
+            if step + 1 >= pre_length:
+                inputs = self.embeddings(y_pred)
+            else:
+                inputs = embeddings[:, step, :]
+        #captions = torch.stack(captions, 1)
+
+        return captions
+
+
+
     def inference_beamsearch(self, features, sos_idx, eos_idx, beam_size=20, max_length=30, all_captions=False, device='cuda'):
         '''
             features: (1, enc_image_size, enc_image_size, encoder_dim)
@@ -403,7 +450,7 @@ class Generator(torch.nn.Module):
                 return captions
 
 
-    def estimate_rewards(self, features, captions_pred, lengths_pred): 
+    def estimate_rewards(self, features, captions_pred, lengths_pred, vocab): 
         '''
             Input:
                 ! SORT BY lengths_pred !
@@ -429,35 +476,23 @@ class Generator(torch.nn.Module):
             curr_batch_size = sum([l > step for l in decoder_lengths])
             # inputs
             inputs = captions_pred[:curr_batch_size, :decoder_lengths[curr_batch_size]] # (curr_batch_size, decoder_lengths[curr_batch_size])
-            captions = self.decoder.inference(inputs) # (curr_batch_size, xx_len)
+            captions_step = self.decoder.inference2(features[:curr_batch_size], inputs) # (curr_batch_size, max_length=30)
             print('curr_batch_size:', curr_batch_size)
-            print('captions:', captions)
+            print('captions:', captions_step)
 
+            # get lengths_step
+            lengths_step = list() # (curr_batch_size)
+            for caption_step in captions_step:
+                eos_pos = list(caption_step.cpu().numpy()).index(vocab.word2idx['<sos>']) # find pos of <eos>
+                lengths_step.append(eos_pos + 1)
 
+            # if captions contain <eos>
+            rewards[:curr_batch_size, :decoder_lengths[curr_batch_size]] = discriminator.predict(features[:curr_batch_size], captions_step, lengths_step, device) # predict needs captions that contain <eos>
 
+            #rewards = discriminator.predict(features, captions_pred, lengths_pred, device) # (batch_size,)
 
-
-
-
-            # get attention_weighted_encoding
-#            awe, _ = self.decoder.attention(features[:curr_batch_size], hidden_state[:curr_batch_size]) # (curr_batch_size, encoder_dim)
-#            gate = self.decoder.sigmoid(self.decoder.f_beta(hidden_state[:curr_batch_size])) # (curr_batch_size, encoder_dim)
-#            awe = gate * awe # (curr_batch_size, encoder_dim)
-#
-#            # run rnn cell
-#            hidden_state, cell_state = self.decoder.rnn_cell(torch.cat([inputs[:curr_batch_size, :], awe], dim=1), (hidden_state[:curr_batch_size], cell_state[:curr_batch_size]))
-#            
-#            y_pred = self.decoder.classifier(self.decoder.dropout(hidden_state)) # (curr_batch_size, vocab_size)
-#            y_predicted[:curr_batch_size, step, :] = y_pred
-#            actions[:curr_batch_size, step] = y_pred.max(1)[1] # Suppose the vocab with max prob is the correct action
-#
-#            inputs = torch.multinomial(torch.softmax(y_pred, dim=1), 1).squeeze(1) # (curr_batch_size, )
-#            inputs = self.decoder.embeddings(inputs) # (curr_batch_size, embedding_size)
-
-
-
-
-
+        print('rewards:', rewards)
+        return rewards # (batch_size, max(decoder_lengths))
             
     def ad_train(self, dataloader, discriminator, vocab, num_batches=None, alpha_c=1.0):
 
@@ -535,7 +570,7 @@ class Generator(torch.nn.Module):
             
             for index in range(batch_size):
                 for timestep in range(decoder_lengths[index]):
-                    ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index] - baseline)
+                    ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index][timestep] - baseline)
                 
             ad_loss /= batch_size
             
