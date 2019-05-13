@@ -12,6 +12,7 @@ from PIL import Image
 from nltk.translate.bleu_score import sentence_bleu
 import tqdm
 
+
 from dataloader import get_loader
 from generator import Generator
 from settings import *
@@ -85,6 +86,7 @@ def main(args):
         print('sum score:', np.sum(scores[:, i]))
 
 if __name__ == '__main__':
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', type=str, default='pre',
                         help='the generator model to load')
