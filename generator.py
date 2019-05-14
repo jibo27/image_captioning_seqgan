@@ -572,6 +572,7 @@ class Generator(torch.nn.Module):
             # ADVISE: If we train the discriminator, the generator reward will be decreased dramatically. For example, the initial reward was about 0.56, but it quickly becomes 0.3 after about 30 batches. So in my opinion, we should remove the baseline or reduce the baseline.
 
             rewards = self.estimate_rewards(features, captions_pred, lengths_pred, vocab, discriminator) # (batch_size, decoder_lengths)
+            gamma = 1.1 
             
             for index in range(batch_size):
                 batch_loss = 0.0 # loss of the current batch
@@ -580,10 +581,14 @@ class Generator(torch.nn.Module):
                     log_prob = y_predicted[index][timestep][curr_idx] # log probability of curr index/word. Note that log_softmax has already been called
                     #ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index][timestep] - baseline)
                     reward = rewards[index][timestep] 
+                    # ~~~ I think the rewards in front of the sentence should not be too high, since they have less affect in the future ~~~
+                    reward = reward * (1.0 / (gamma ** (decoder_lengths[index] - timestep)))
+
 #                    print('-'*30)
 #                    print('prob:', prob)
 #                    print('reward:', reward)
 #                    print('-'*30)
+                    print('timestep:', timestep, 'reward:', reward)
                     batch_loss += - log_prob * reward # Policy Gradient
                 #print('batch_loss:', batch_loss)
                 #print('batch_loss / decoder_lengths[index]:', batch_loss / decoder_lengths[index])
