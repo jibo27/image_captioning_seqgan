@@ -573,14 +573,14 @@ class Generator(torch.nn.Module):
                 batch_loss = 0.0 # loss of the current batch
                 for timestep in range(decoder_lengths[index]):
                     curr_idx = actions[index][timestep]
-                    prob = y_predicted[index][timestep][curr_idx] # probability of curr index/word
+                    log_prob = y_predicted[index][timestep][curr_idx] # log probability of curr index/word. Note that log_softmax has already been called
                     #ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index][timestep] - baseline)
                     reward = rewards[index][timestep] 
-                    print('-'*30)
-                    print('prob:', prob)
-                    print('reward:', reward)
-                    print('-'*30)
-                    batch_loss += - torch.log(prob) * reward # Policy Gradient
+#                    print('-'*30)
+#                    print('prob:', prob)
+#                    print('reward:', reward)
+#                    print('-'*30)
+                    batch_loss += - log_prob * reward # Policy Gradient
                 print('batch_loss:', batch_loss)
                 ad_loss += batch_loss
 
