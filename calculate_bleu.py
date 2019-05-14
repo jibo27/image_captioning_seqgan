@@ -33,7 +33,7 @@ def main(args):
 
     #image_dir = './data/valresized2014/'
     #caption_path = './data/annotations/captions_val2014.json'
-    num_workers = 32
+    num_workers = 1
 
 
     dataloader = get_loader(image_dir, caption_path, vocab, 
