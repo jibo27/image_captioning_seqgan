@@ -469,6 +469,7 @@ class Generator(torch.nn.Module):
         #print('captions_pred:', captions_pred)
         #print('lengths_pred', lengths_pred)
         
+        print('decoder_lengths:', decoder_lengths)
         for step in range(max(decoder_lengths)):
             curr_batch_size = sum([l > step for l in decoder_lengths])
             # inputs
@@ -569,13 +570,17 @@ class Generator(torch.nn.Module):
             rewards = self.estimate_rewards(features, captions_pred, lengths_pred, vocab, discriminator) # (batch_size, decoder_lengths)
             
             for index in range(batch_size):
+                batch_loss = 0.0 # loss of the current batch
                 for timestep in range(decoder_lengths[index]):
                     curr_idx = actions[index][timestep]
                     prob = y_predicted[index][timestep][curr_idx] # probability of curr index/word
                     #ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index][timestep] - baseline)
                     reward = rewards[index][timestep] 
-                    ad_loss += - torch.log(prob) * reward # Policy Gradient
+                    batch_loss += - torch.log(prob) * reward # Policy Gradient
+                print('batch_loss:', batch_loss)
+                ad_loss += batch_loss
 
+            print('ad_loss(before division):', ad_loss)
                 
             ad_loss /= batch_size
             
