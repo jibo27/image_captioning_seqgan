@@ -611,7 +611,7 @@ class Generator(torch.nn.Module):
                 print('Start saving ad_generator')
                 torch.save(self.state_dict(), self.ad_generator_path)
 
-            if (i + 1) % 10 == 0:
+            if (i + 1) % 10 == 0: # !!! Do not update generator every batch, since it does not conform to Monte Carlo's requirements which requires a sufficient number of samples
                 for param in self.parameters():
                     if param.requires_grad == True:
                         param.grad /= 10
