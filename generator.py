@@ -604,19 +604,21 @@ class Generator(torch.nn.Module):
             
             self.optimizer.zero_grad()
             ad_loss.backward()
-            if i % 10 == 0:
-                for param in self.parameters():
-                    if param.requires_grad == True:
-                        param.grad /= 10
-                print('Start updating')
-                self.optimizer.step()
-
             if i % self.log_every  == 0:
                 print('Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f} ---ad'.format(i, num_steps, ad_loss.item(), np.exp(ad_loss.item()))) 
     
             if (i + 1) % self.save_every_ad == 0:
                 print('Start saving ad_generator')
                 torch.save(self.state_dict(), self.ad_generator_path)
+
+            if i % 10 == 0 and i != 0:
+                for param in self.parameters():
+                    if param.requires_grad == True:
+                        param.grad /= 10
+                print('Start updating')
+                self.optimizer.step()
+
+
             if num_batches and i + 1 >= num_batches:
                 break
 
