@@ -465,7 +465,7 @@ class Generator(torch.nn.Module):
             curr_batch_size = sum([l > step for l in decoder_lengths])
             # inputs
             #inputs = captions_pred[:curr_batch_size, :decoder_lengths[curr_batch_size]] # (curr_batch_size, decoder_lengths[curr_batch_size])
-            inputs = captions_pred[:curr_batch_size, :step] # (curr_batch_size, step)
+            inputs = captions_pred[:curr_batch_size, :step + 1] # (curr_batch_size, step + 1)
             
             captions_step = self.decoder.inference2(features[:curr_batch_size], inputs) # (curr_batch_size, max_length=30)
             print('curr_batch_size:', curr_batch_size)
