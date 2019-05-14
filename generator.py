@@ -185,6 +185,7 @@ class Decoder(torch.nn.Module):
                 captions: (batch_size, max_length)
         '''
         max_length -= 1 # adjust
+        pre_length = pre_input.shape[1]
 
         # embedding
         #embeddings = self.embeddings(torch.LongTensor(pre_input).to(device)) # (batch_size, pre_length, embedding_size)
