@@ -572,7 +572,7 @@ class Generator(torch.nn.Module):
             # ADVISE: If we train the discriminator, the generator reward will be decreased dramatically. For example, the initial reward was about 0.56, but it quickly becomes 0.3 after about 30 batches. So in my opinion, we should remove the baseline or reduce the baseline.
 
             rewards = self.estimate_rewards(features, captions_pred, lengths_pred, vocab, discriminator) # (batch_size, decoder_lengths)
-            gamma = 1.1 
+            gamma = 2
             
             for index in range(batch_size):
                 batch_loss = 0.0 # loss of the current batch
