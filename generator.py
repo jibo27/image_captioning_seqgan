@@ -445,6 +445,8 @@ class Generator(torch.nn.Module):
             Output:
                 reward: (batch_size, decoder_lengths)
         '''
+        batch_size = features.shape[0]
+
         mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
         hidden_state = self.decoder.h_fc(mean_features) # (batch_size, lstm_size)
         cell_state = self.decoder.c_fc(mean_features) # (batch_size, lstm_size)
