@@ -212,14 +212,18 @@ class Decoder(torch.nn.Module):
             hidden_state, cell_state = self.rnn_cell(torch.cat([inputs, awe], dim=1), (hidden_state, cell_state))
             y_pred = self.classifier(hidden_state)
 
+            #_, y_pred = y_pred.max(1) # y_pred: (batch_size, )
+            #captions[:, step] = y_pred
             #captions.append(y_pred)
             if step + 1 >= pre_length:
-                captions[:, step] = pre_input[:, step]
+                _, y_pred = y_pred.max(1) # y_pred: (batch_size, )
+                #captions[:, step] = pre_input[:, step]
+                captions[:, step] = y_pred
                 inputs = self.embeddings(y_pred)
             else:
-                _, y_pred = y_pred.max(1) # y_pred: (batch_size, )
-                captions[:, step] = y_pred
-                inputs = embeddings[:, step, :]
+                captions[:, step] = pre_input[:, step + 1]
+                #inputs = embeddings[:, step, :]
+                inputs = embeddings[:, step + 1, :]
         #captions = torch.stack(captions, 1)
 
         return captions
