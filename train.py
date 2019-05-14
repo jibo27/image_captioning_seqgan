@@ -53,7 +53,7 @@ def main(args):
     elif args.pre_train == 'g':
         generator.pre_train(dataloader, vocab)
     elif args.pre_train == 'ad':
-        generator.ad_train(dataloader, discriminator, vocab, alpha_c=1.0)
+        generator.ad_train(dataloader, discriminator, vocab, gamma=args.gamma, alpha_c=1.0)
 
 #    for i in range(5):
 #        print("D")
@@ -68,6 +68,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--pre_train', type=str, default='gd', help='mode of pre-train')
     parser.add_argument('--load', type=str, default='pre', help='mode of pre-train') # 'pre' / 'ad'
+    parser.add_argument('--gamma', type=float, default=2.0, help='') # 'pre' / 'ad'
     args = parser.parse_args()
     main(args)
 

@@ -499,7 +499,11 @@ class Generator(torch.nn.Module):
         #print('rewards:', rewards)
         return rewards # (batch_size, max(decoder_lengths))
             
-    def ad_train(self, dataloader, discriminator, vocab, num_batches=None, alpha_c=1.0):
+    def ad_train(self, dataloader, discriminator, vocab, gamma=2.0, num_batches=None, alpha_c=1.0):
+        '''
+            Input:
+                gamma: reduce the reward
+        '''
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         num_steps = len(dataloader)
@@ -572,7 +576,6 @@ class Generator(torch.nn.Module):
             # ADVISE: If we train the discriminator, the generator reward will be decreased dramatically. For example, the initial reward was about 0.56, but it quickly becomes 0.3 after about 30 batches. So in my opinion, we should remove the baseline or reduce the baseline.
 
             rewards = self.estimate_rewards(features, captions_pred, lengths_pred, vocab, discriminator) # (batch_size, decoder_lengths)
-            gamma = 2
             
             for index in range(batch_size):
                 batch_loss = 0.0 # loss of the current batch
@@ -601,7 +604,11 @@ class Generator(torch.nn.Module):
             
             self.optimizer.zero_grad()
             ad_loss.backward()
-            self.optimizer.step()
+            if i % 10 == 0:
+                for param in model.parameters():
+                    if param.requires_grad == True:
+                        param.grad /= 10
+                self.optimizer.step()
 
             if i % self.log_every  == 0:
                 print('Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f} ---ad'.format(i, num_steps, ad_loss.item(), np.exp(ad_loss.item()))) 
@@ -611,6 +618,4 @@ class Generator(torch.nn.Module):
                 torch.save(self.state_dict(), self.ad_generator_path)
             if num_batches and i + 1 >= num_batches:
                 break
-                
-
 
