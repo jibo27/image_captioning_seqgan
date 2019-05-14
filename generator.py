@@ -187,7 +187,8 @@ class Decoder(torch.nn.Module):
         max_length -= 1 # adjust
 
         # embedding
-        embeddings = self.embeddings(torch.LongTensor(pre_input).to(device)) # (batch_size, pre_length, embedding_size)
+        #embeddings = self.embeddings(torch.LongTensor(pre_input).to(device)) # (batch_size, pre_length, embedding_size)
+        embeddings = self.embeddings(pre_input) # (batch_size, pre_length, embedding_size)
 
         # initialize LSTM states
         mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
