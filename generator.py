@@ -466,8 +466,8 @@ class Generator(torch.nn.Module):
         actions = torch.zeros(batch_size, max(decoder_lengths)).long().to(device)
         #inputs = self.decoder.embeddings(torch.LongTensor([vocab.word2idx['<sos>']] * batch_size).to(device)) # (batch_size, embedding_size)
 
-        print('captions_pred:', captions_pred)
-        print('lengths_pred', lengths_pred)
+        #print('captions_pred:', captions_pred)
+        #print('lengths_pred', lengths_pred)
         
         for step in range(max(decoder_lengths)):
             curr_batch_size = sum([l > step for l in decoder_lengths])
@@ -477,7 +477,7 @@ class Generator(torch.nn.Module):
             
             captions_step = self.decoder.inference2(features[:curr_batch_size], inputs) # (curr_batch_size, max_length=30)
             print('curr_batch_size:', curr_batch_size)
-            print('captions:', captions_step)
+            #print('captions:', captions_step)
 
             # get lengths_step
             lengths_step = list() # (curr_batch_size)
