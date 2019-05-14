@@ -44,12 +44,12 @@ def main(args):
             for i in range(4):
                 generator.pre_train(dataloader, vocab)
             for i in range(1):
-                discriminator.pre_train(generator, dataloader, vocab)
+                discriminator.fit(generator, dataloader, vocab)
     elif args.pre_train == 'dg':
-        discriminator.pre_train(generator, dataloader, vocab)
+        discriminator.fit(generator, dataloader, vocab)
         generator.pre_train(dataloader, vocab)
     elif args.pre_train == 'd':
-        discriminator.pre_train(generator, dataloader, vocab)
+        discriminator.fit(generator, dataloader, vocab)
     elif args.pre_train == 'g':
         generator.pre_train(dataloader, vocab)
     elif args.pre_train == 'ad':
@@ -57,7 +57,7 @@ def main(args):
 
 #    for i in range(5):
 #        print("D")
-#        discriminator.pre_train(generator, dataloader, vocab, num_batches=100)
+#        discriminator.fit(generator, dataloader, vocab, num_batches=100)
 #        print("G")
 #        generator.ad_train(dataloader, discriminator, vocab, num_batches=20, alpha_c=1.0)
 

@@ -91,7 +91,7 @@ class Discriminator(torch.nn.Module):
         return y_predicted
 
 
-    def pre_train(self, generator, dataloader, vocab, num_batches=None, alpha_c=1.0):
+    def fit(self, generator, dataloader, vocab, num_batches=None, alpha_c=1.0):
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         num_steps = len(dataloader)
