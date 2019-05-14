@@ -26,9 +26,3 @@ cd coco/PythonAPI
 make 
 python setup.py build
 python setup.py install
-
-# os.chdir("/content/coco/PythonAPI")
-# !make
-# !python setup.py build
-# !python setup.py install
-
