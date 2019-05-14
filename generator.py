@@ -557,7 +557,12 @@ class Generator(torch.nn.Module):
             
             for index in range(batch_size):
                 for timestep in range(decoder_lengths[index]):
-                    ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index][timestep] - baseline)
+                    curr_idx = actions[index][timestep]
+                    prob = y_predicted[index][timestep][curr_idx] # probability of curr index/word
+                    #ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index][timestep] - baseline)
+                    reward = rewards[index][timestep] 
+                    ad_loss += - torch.log(prob) * reward # Policy Gradient
+
                 
             ad_loss /= batch_size
             
