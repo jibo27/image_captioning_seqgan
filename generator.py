@@ -469,7 +469,7 @@ class Generator(torch.nn.Module):
         #print('captions_pred:', captions_pred)
         #print('lengths_pred', lengths_pred)
         
-        print('decoder_lengths:', decoder_lengths)
+        #print('decoder_lengths:', decoder_lengths)
         for step in range(max(decoder_lengths)):
             curr_batch_size = sum([l > step for l in decoder_lengths])
             # inputs
@@ -477,7 +477,7 @@ class Generator(torch.nn.Module):
             inputs = captions_pred[:curr_batch_size, :step + 1] # (curr_batch_size, step + 1)
             
             captions_step = self.decoder.inference2(features[:curr_batch_size], inputs) # (curr_batch_size, max_length=30)
-            print('curr_batch_size:', curr_batch_size)
+            #print('curr_batch_size:', curr_batch_size)
             #print('captions:', captions_step)
 
             # get lengths_step
@@ -492,7 +492,7 @@ class Generator(torch.nn.Module):
 
             #rewards = discriminator.predict(features, captions_pred, lengths_pred, device) # (batch_size,)
 
-        print('rewards:', rewards)
+        #print('rewards:', rewards)
         return rewards # (batch_size, max(decoder_lengths))
             
     def ad_train(self, dataloader, discriminator, vocab, num_batches=None, alpha_c=1.0):
@@ -581,14 +581,14 @@ class Generator(torch.nn.Module):
 #                    print('reward:', reward)
 #                    print('-'*30)
                     batch_loss += - log_prob * reward # Policy Gradient
-                print('batch_loss:', batch_loss)
-                print('batch_loss / decoder_lengths[index]:', batch_loss / decoder_lengths[index])
+                #print('batch_loss:', batch_loss)
+                #print('batch_loss / decoder_lengths[index]:', batch_loss / decoder_lengths[index])
                 ad_loss += batch_loss / decoder_lengths[index]
 
-            print('ad_loss(before division):', ad_loss)
+            #print('ad_loss(before division):', ad_loss)
                 
             ad_loss /= batch_size
-            print('ad_loss(final):', ad_loss)
+            #print('ad_loss(final):', ad_loss)
             
             self.optimizer.zero_grad()
             ad_loss.backward()
