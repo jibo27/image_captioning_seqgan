@@ -38,6 +38,6 @@ def main(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--load', type=str, default='pre', help='which model to load')
+    parser.add_argument('--load', type=str, default='pre', help='which model to load') # 'pre' or 'ad'
     args = parser.parse_args()
     main(args)
