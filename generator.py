@@ -576,6 +576,10 @@ class Generator(torch.nn.Module):
                     prob = y_predicted[index][timestep][curr_idx] # probability of curr index/word
                     #ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index][timestep] - baseline)
                     reward = rewards[index][timestep] 
+                    print('-'*30)
+                    print('prob:', prob)
+                    print('reward:', reward)
+                    print('-'*30)
                     batch_loss += - torch.log(prob) * reward # Policy Gradient
                 print('batch_loss:', batch_loss)
                 ad_loss += batch_loss
