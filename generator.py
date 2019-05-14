@@ -8,6 +8,7 @@ import torchvision.transforms as T
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 import torch.nn.functional as F
 
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
 class Encoder(torch.nn.Module):
     def __init__(self, enc_img_size=14):
@@ -356,7 +357,6 @@ class Generator(torch.nn.Module):
             Pre-train discriminator based on data_loader
         '''
 
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         num_steps = len(dataloader)
 
         for index, (imgs, captions, lengths) in enumerate(dataloader):
