@@ -19,8 +19,7 @@ cd /content
 rm captions_train-val2014.zip
 
 pip install nltk
-python -c 'import nltk'
-python -c 'nltk.download("punkt")'
+python -c 'import nltk; nltk.download("punkt")'
 
 git clone https://github.com/pdollar/coco.git 
 cd coco/PythonAPI 
