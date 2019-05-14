@@ -29,6 +29,8 @@ def main(args):
     generator = generator.eval()
 
 
+    #print(generator.inference(vocab, image_dir=args.image_dir, translate_flag=True))
+    
     for filename in os.listdir(args.image_dir):
 
         fullname = os.path.join(args.image_dir, filename)
