@@ -29,15 +29,21 @@ def main(args):
     generator = generator.eval()
 
 
-    fullnames = ['data/giraffe.png', 'data/surf.jpg', 'data/bedroom.jpg']
-    for fullname in fullnames:
+    for filename in os.listdir(args.image_dir):
+
+        fullname = os.path.join(args.image_dir, filename)
         print(fullname.split('/')[-1].split('.')[0] + ':')
         print(generator.inference(vocab, img_path=fullname, translate_flag=True))
-        #print(caption = generator.generate(fullname, vocab, False))
+        #fullnames = ['data/giraffe.png', 'data/surf.jpg', 'data/bedroom.jpg']
+        #for fullname in fullnames:
+            #print(fullname.split('/')[-1].split('.')[0] + ':')
+            #print(generator.inference(vocab, img_path=fullname, translate_flag=True))
+            #print(caption = generator.generate(fullname, vocab, False))
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--load', type=str, default='pre', help='which model to load') # 'pre' or 'ad'
+    parser.add_argument('--image_dir', type=str, default='data/images', help='')
     args = parser.parse_args()
     main(args)
