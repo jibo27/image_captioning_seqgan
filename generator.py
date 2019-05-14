@@ -582,11 +582,13 @@ class Generator(torch.nn.Module):
 #                    print('-'*30)
                     batch_loss += - log_prob * reward # Policy Gradient
                 print('batch_loss:', batch_loss)
-                ad_loss += batch_loss
+                print('batch_loss / decoder_lengths[index]:', batch_loss / decoder_lengths[index])
+                ad_loss += batch_loss / decoder_lengths[index]
 
             print('ad_loss(before division):', ad_loss)
                 
             ad_loss /= batch_size
+            print('ad_loss(final):', ad_loss)
             
             self.optimizer.zero_grad()
             ad_loss.backward()
