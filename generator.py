@@ -553,7 +553,7 @@ class Generator(torch.nn.Module):
             baseline = 0 # make the rewards that less than 0.5 to be negative so that the "too fake" captions are punished
             # ADVISE: If we train the discriminator, the generator reward will be decreased dramatically. For example, the initial reward was about 0.56, but it quickly becomes 0.3 after about 30 batches. So in my opinion, we should remove the baseline or reduce the baseline.
 
-            rewards = self.estimate_rewards(features, captions_pred, lengths_pred) # (batch_size, decoder_lengths)
+            rewards = self.estimate_rewards(features, captions_pred, lengths_pred, vocab) # (batch_size, decoder_lengths)
             
             for index in range(batch_size):
                 for timestep in range(decoder_lengths[index]):
