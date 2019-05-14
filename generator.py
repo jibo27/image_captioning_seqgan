@@ -461,7 +461,8 @@ class Generator(torch.nn.Module):
         decoder_lengths = [length_pred - 1 for length_pred in lengths_pred] # remove <eos>, since the reward at the position of <eos> does not have corresponding log_action to multiply
 
         y_predicted = torch.zeros(batch_size, max(decoder_lengths), self.vocab_size).to(device)
-        rewards = torch.zeros(batch_size, max(decoder_lengths), self.vocab_size).to(device)
+        #rewards = torch.zeros(batch_size, max(decoder_lengths), self.vocab_size).to(device)
+        rewards = torch.zeros(batch_size, max(decoder_lengths)).to(device)
         actions = torch.zeros(batch_size, max(decoder_lengths)).long().to(device)
         #inputs = self.decoder.embeddings(torch.LongTensor([vocab.word2idx['<sos>']] * batch_size).to(device)) # (batch_size, embedding_size)
 
