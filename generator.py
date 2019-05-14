@@ -212,12 +212,13 @@ class Decoder(torch.nn.Module):
             hidden_state, cell_state = self.rnn_cell(torch.cat([inputs, awe], dim=1), (hidden_state, cell_state))
             y_pred = self.classifier(hidden_state)
 
-            _, y_pred = y_pred.max(1) # y_pred: (batch_size, )
-            captions[:, step] = y_pred
             #captions.append(y_pred)
             if step + 1 >= pre_length:
+                captions[:, step] = pre_input[:, step]
                 inputs = self.embeddings(y_pred)
             else:
+                _, y_pred = y_pred.max(1) # y_pred: (batch_size, )
+                captions[:, step] = y_pred
                 inputs = embeddings[:, step, :]
         #captions = torch.stack(captions, 1)
 
@@ -476,7 +477,7 @@ class Generator(torch.nn.Module):
             # get lengths_step
             lengths_step = list() # (curr_batch_size)
             for caption_step in captions_step:
-                eos_pos = list(caption_step.cpu().numpy()).index(vocab.word2idx['<sos>']) # find pos of <eos>
+                eos_pos = list(caption_step.cpu().numpy()).index(vocab.word2idx['<eos>']) # find pos of <eos>
                 lengths_step.append(eos_pos + 1)
 
             # if captions contain <eos>
