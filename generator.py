@@ -129,52 +129,52 @@ class Decoder(torch.nn.Module):
         return y_predicted, captions, decoder_lengths, alphas # Return decoder_lengths to replace the original lengths!!! It is every important beacause 1. we do not consider the output of <eos> 2. avoid the bug of 'RuntimeError: select(): index 25 out of range for tensor of size [25, 32, 9956] at dimension 0'
 
 
-    def inference(self, features, pre_input, max_length=30, device='cuda'):
-        '''
-            Input:
-                features: (enc_image_size, enc_image_size, encoder_dim)
-                sos_idx: index of <sos>
-                pre_input: (pre_length, ): list. e.g., [sos_idx] / [sos_idx, xx_idx, ...]
-            Output:
-                captions: (batch_size, max_length)
-        '''
-        max_length -= 1 # adjust
-        # flatten features
-        features = features.view(1, -1, features.size(-1)) # (batch_size, num_pixels, encoder_dim)
-
-        # embedding
-        #inputs = self.embeddings(torch.Tensor([sos_idx]).long().to(device)) # (batch_size=1, embedding_size)
-        embeddings = self.embeddings(torch.LongTensor(pre_input).unsqueeze(0).to(device)) # (batch_size=1, pre_length, embedding_size)
-
-        # initialize LSTM states
-        mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
-        hidden_state = self.h_fc(mean_features) # (batch_size, lstm_size)
-        cell_state = self.c_fc(mean_features) # (batch_size, lstm_size)
-
-        #############################################
-        # Run LSTM
-        #############################################
-        batch_size = features.size(0)
-        num_pixels = features.size(1)
-        captions = list()
-        inputs = embeddings[:, 0, :]
-        for step in range(max_length):
-            # get attention
-            attention_weighted_encoding, alpha = self.attention(features, hidden_state) # (curr_batch_size, encoder_dim)
-            gate = self.sigmoid(self.f_beta(hidden_state)) # (curr_batch_size, encoder_dim)
-            attention_weighted_encoding = gate * attention_weighted_encoding # (curr_batch_size, encoder_dim)
-            hidden_state, cell_state = self.rnn_cell(torch.cat([inputs, attention_weighted_encoding], dim=1), (hidden_state, cell_state))
-            y_pred = self.classifier(hidden_state)
-
-            _, y_pred = y_pred.max(1)
-            captions.append(y_pred)
-            if step + 1 >= pre_length:
-                inputs = self.embeddings(y_pred)
-            else:
-                inputs = embeddings[:, step, :]
-        captions = torch.stack(captions, 1)
-
-        return captions
+#    def inference(self, features, pre_input, max_length=30, device='cuda'):
+#        '''
+#            Input:
+#                features: (enc_image_size, enc_image_size, encoder_dim)
+#                sos_idx: index of <sos>
+#                pre_input: (pre_length, ): list. e.g., [sos_idx] / [sos_idx, xx_idx, ...]
+#            Output:
+#                captions: (batch_size, max_length)
+#        '''
+#        max_length -= 1 # adjust
+#        # flatten features
+#        features = features.view(1, -1, features.size(-1)) # (batch_size, num_pixels, encoder_dim)
+#
+#        # embedding
+#        #inputs = self.embeddings(torch.Tensor([sos_idx]).long().to(device)) # (batch_size=1, embedding_size)
+#        embeddings = self.embeddings(torch.LongTensor(pre_input).unsqueeze(0).to(device)) # (batch_size=1, pre_length, embedding_size)
+#
+#        # initialize LSTM states
+#        mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
+#        hidden_state = self.h_fc(mean_features) # (batch_size, lstm_size)
+#        cell_state = self.c_fc(mean_features) # (batch_size, lstm_size)
+#
+#        #############################################
+#        # Run LSTM
+#        #############################################
+#        batch_size = features.size(0)
+#        num_pixels = features.size(1)
+#        captions = list()
+#        inputs = embeddings[:, 0, :]
+#        for step in range(max_length):
+#            # get attention
+#            attention_weighted_encoding, alpha = self.attention(features, hidden_state) # (curr_batch_size, encoder_dim)
+#            gate = self.sigmoid(self.f_beta(hidden_state)) # (curr_batch_size, encoder_dim)
+#            attention_weighted_encoding = gate * attention_weighted_encoding # (curr_batch_size, encoder_dim)
+#            hidden_state, cell_state = self.rnn_cell(torch.cat([inputs, attention_weighted_encoding], dim=1), (hidden_state, cell_state))
+#            y_pred = self.classifier(hidden_state)
+#
+#            _, y_pred = y_pred.max(1)
+#            captions.append(y_pred)
+#            if step + 1 >= pre_length:
+#                inputs = self.embeddings(y_pred)
+#            else:
+#                inputs = embeddings[:, step, :]
+#        captions = torch.stack(captions, 1)
+#
+#        return captions
 
     def inference2(self, features, pre_input, max_length=30, device='cuda'):
         '''
