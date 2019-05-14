@@ -483,7 +483,11 @@ class Generator(torch.nn.Module):
             # get lengths_step
             lengths_step = list() # (curr_batch_size)
             for caption_step in captions_step:
-                eos_pos = list(caption_step.cpu().numpy()).index(vocab.word2idx['<eos>']) # find pos of <eos>
+                l = list(caption_step.cpu().numpy())
+                if vocab.word2idx['<eos>'] in l:
+                    eos_pos = list(caption_step.cpu().numpy()).index(vocab.word2idx['<eos>']) # find pos of <eos>
+                else:
+                    eos_pos = len(l) - 1
                 lengths_step.append(eos_pos + 1)
 
             # if captions contain <eos>
