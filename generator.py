@@ -125,8 +125,7 @@ class Decoder(torch.nn.Module):
             y_predicted[:curr_batch_size, step, :] = y_pred
             alphas[:curr_batch_size, step, :] = alpha
 
-        #return y_predicted, captions, lengths, alphas, sorted_idx
-        return y_predicted, captions, decoder_lengths, alphas # Return decoder_lengths to replace the original lengths!!! It is every important beacause 1. we do not consider the output of <eos> 2. avoid the bug of 'RuntimeError: select(): index 25 out of range for tensor of size [25, 32, 9956] at dimension 0'
+        return y_predicted, captions, decoder_lengths, alphas
 
 
 #    def inference(self, features, pre_input, max_length=30, device='cuda'):
@@ -335,11 +334,9 @@ class Generator(torch.nn.Module):
         fine_tune_encoder = False
         self.encoder = Encoder()
         self.encoder.fine_tune(fine_tune_encoder)
-        #self.encoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, self.encoder.parameters()), lr=self.learning_rate) if fine_tune_encoder else None
 
         # ------------- decoder ----------------
         self.decoder = Decoder(attention_dim, embedding_size, lstm_size, vocab_size)
-        #self.decoder_optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, self.decoder.parameters()), lr=self.learning_rate)
         
         # ------------- load model ----------------
         self.generator_path = generator_path
@@ -371,25 +368,15 @@ class Generator(torch.nn.Module):
 
             targets = captions[:, 1:]
 
-            #y_predicted, _ = pack_padded_sequence(y_predicted, lengths, batch_first=True)
             y_predicted = pack_padded_sequence(y_predicted, lengths, batch_first=True)[0]
-            #targets, _ = pack_padded_sequence(targets, lengths, batch_first=True)
             targets = pack_padded_sequence(targets, lengths, batch_first=True)[0]
 
             loss = self.loss_fn(y_predicted, targets)
             loss += alpha_c * ((1.0 - alphas.sum(dim=1)) ** 2).mean()
             
-#                if self.encoder_optimizer is not None:
-#                    self.encoder_optimizer.zero_grad()
-#                self.decoder_optimizer.zero_grad()
-
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-
-#                if self.encoder_optimizer is not None:
-#                    self.encoder_optimizer.step()
-#                self.decoder_optimizer.step()
 
             if index % self.log_every  == 0:
                 print('Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(index, num_steps, loss.item(), np.exp(loss.item()))) 
