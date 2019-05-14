@@ -516,10 +516,11 @@ class Generator(torch.nn.Module):
         #print('rewards:', rewards)
         return rewards # (batch_size, max(decoder_lengths))
             
-    def ad_train(self, dataloader, discriminator, vocab, gamma=2.0, num_batches=None, alpha_c=1.0):
+    def ad_train(self, dataloader, discriminator, vocab, gamma=2.0, update_every=20, num_batches=None, alpha_c=1.0):
         '''
             Input:
                 gamma: reduce the reward
+                update_every: the intervals between updates
         '''
 
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -602,7 +603,7 @@ class Generator(torch.nn.Module):
                     #ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index][timestep] - baseline)
                     reward = rewards[index][timestep] 
                     # ~~~ I think the rewards in front of the sentence should not be too high, since they have less affect in the future ~~~
-                    reward = reward * (1.0 / (gamma ** (decoder_lengths[index] - timestep)))
+                    #reward = reward * (1.0 / (gamma ** (decoder_lengths[index] - timestep)))
 
 #                    print('-'*30)
 #                    print('prob:', prob)
@@ -634,10 +635,10 @@ class Generator(torch.nn.Module):
                     ad_generator_path = 'data/ad_generator_params_%d.pkl'%(i)
                     torch.save(self.state_dict(), ad_generator_path)
 
-            if (i + 1) % 10 == 0: # !!! Do not update generator every batch, since it does not conform to Monte Carlo's requirements which requires a sufficient number of samples
+            if (i + 1) % update_every == 0: # !!! Do not update generator every batch, since it does not conform to Monte Carlo's requirements which requires a sufficient number of samples
                 for param in self.parameters():
                     if param.requires_grad == True:
-                        param.grad /= 10
+                        param.grad /= update_every
                 print('Start updating')
                 self.optimizer.step()
 
