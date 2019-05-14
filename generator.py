@@ -605,7 +605,7 @@ class Generator(torch.nn.Module):
             self.optimizer.zero_grad()
             ad_loss.backward()
             if i % 10 == 0:
-                for param in model.parameters():
+                for param in self.parameters():
                     if param.requires_grad == True:
                         param.grad /= 10
                 print('Start updating')
