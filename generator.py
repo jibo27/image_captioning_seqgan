@@ -613,6 +613,7 @@ class Generator(torch.nn.Module):
                 torch.save(self.state_dict(), ad_generator_path)
 
                 if (i + 1) % 500 == 0
+                    print('Start saving ad_generator %d'%(i))
                     ad_generator_path = 'data/ad_generator_params_%d.pkl'%(i)
                     torch.save(self.state_dict(), ad_generator_path)
 
