@@ -8,9 +8,9 @@ cd /content
 [ -d val2014 ] || unzip -q val2014.zip
 [ -d annotations ] || unzip -q annotations_trainval2014.zip
 
-rm ./data/captions_train-val2014.zip
-rm ./data/train2014.zip 
-rm ./data/val2014.zip 
+rm captions_train-val2014.zip
+rm train2014.zip 
+rm val2014.zip 
 
 pip install nltk
 python -c 'import nltk'
