@@ -485,7 +485,8 @@ class Generator(torch.nn.Module):
                 lengths_step.append(eos_pos + 1)
 
             # if captions contain <eos>
-            rewards[:curr_batch_size, :decoder_lengths[curr_batch_size]] = discriminator.predict(features[:curr_batch_size], captions_step, lengths_step, device) # predict needs captions that contain <eos>
+            #rewards[:curr_batch_size, :decoder_lengths[curr_batch_size]] = discriminator.predict(features[:curr_batch_size], captions_step, lengths_step, device) # predict needs captions that contain <eos>
+            rewards[:curr_batch_size, step] = discriminator.predict(features[:curr_batch_size], captions_step, lengths_step, device) # predict needs captions that contain <eos>
 
             #rewards = discriminator.predict(features, captions_pred, lengths_pred, device) # (batch_size,)
 
