@@ -608,6 +608,7 @@ class Generator(torch.nn.Module):
                 for param in model.parameters():
                     if param.requires_grad == True:
                         param.grad /= 10
+                print('Start updating')
                 self.optimizer.step()
 
             if i % self.log_every  == 0:
