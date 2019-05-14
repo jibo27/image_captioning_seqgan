@@ -478,19 +478,12 @@ class Generator(torch.nn.Module):
         decoder_lengths = [length_pred - 1 for length_pred in lengths_pred] # remove <eos>, since the reward at the position of <eos> does not have corresponding log_action to multiply
 
         y_predicted = torch.zeros(batch_size, max(decoder_lengths), self.vocab_size).to(device)
-        #rewards = torch.zeros(batch_size, max(decoder_lengths), self.vocab_size).to(device)
         rewards = torch.zeros(batch_size, max(decoder_lengths)).to(device)
         actions = torch.zeros(batch_size, max(decoder_lengths)).long().to(device)
-        #inputs = self.decoder.embeddings(torch.LongTensor([vocab.word2idx['<sos>']] * batch_size).to(device)) # (batch_size, embedding_size)
 
-        #print('captions_pred:', captions_pred)
-        #print('lengths_pred', lengths_pred)
-        
-        #print('decoder_lengths:', decoder_lengths)
         for step in range(max(decoder_lengths)):
             curr_batch_size = sum([l > step for l in decoder_lengths])
             # inputs
-            #inputs = captions_pred[:curr_batch_size, :decoder_lengths[curr_batch_size]] # (curr_batch_size, decoder_lengths[curr_batch_size])
             inputs = captions_pred[:curr_batch_size, :step + 1] # (curr_batch_size, step + 1)
             
             captions_step = self.decoder.inference2(features[:curr_batch_size], inputs) # (curr_batch_size, max_length=30)
@@ -508,12 +501,8 @@ class Generator(torch.nn.Module):
                 lengths_step.append(eos_pos + 1)
 
             # if captions contain <eos>
-            #rewards[:curr_batch_size, :decoder_lengths[curr_batch_size]] = discriminator.predict(features[:curr_batch_size], captions_step, lengths_step, device) # predict needs captions that contain <eos>
             rewards[:curr_batch_size, step] = discriminator.predict(features[:curr_batch_size], captions_step, lengths_step, device) # predict needs captions that contain <eos>
 
-            #rewards = discriminator.predict(features, captions_pred, lengths_pred, device) # (batch_size,)
-
-        #print('rewards:', rewards)
         return rewards # (batch_size, max(decoder_lengths))
             
     def ad_train(self, dataloader, discriminator, vocab, gamma=2.0, update_every=20, num_batches=None, alpha_c=1.0):
@@ -605,15 +594,11 @@ class Generator(torch.nn.Module):
                     # ~~~ I think the rewards in front of the sentence should not be too high, since they have less affect in the future ~~~
                     #reward = reward * (1.0 / (gamma ** (decoder_lengths[index] - timestep)))
 
-#                    print('-'*30)
-#                    print('prob:', prob)
-#                    print('reward:', reward)
-#                    print('-'*30)
-                    #print('timestep:', timestep, 'reward:', reward)
                     batch_loss += - log_prob * reward # Policy Gradient
                 #print('batch_loss:', batch_loss)
                 #print('batch_loss / decoder_lengths[index]:', batch_loss / decoder_lengths[index])
-                ad_loss += batch_loss / decoder_lengths[index]
+                #ad_loss += batch_loss / decoder_lengths[index]
+                ad_loss += batch_loss # According to the formula, the loss is the summation rather than mean
 
             #print('ad_loss(before division):', ad_loss)
                 
@@ -632,7 +617,7 @@ class Generator(torch.nn.Module):
 
                 if (i + 1) % 100 == 0:
                     print('Start saving ad_generator %d'%(i))
-                    ad_generator_path = 'data/ad_generator_params_%d.pkl'%(i)
+                    ad_generator_path = 'data/ad_generator_params_%d.pkl'%(i + 1)
                     torch.save(self.state_dict(), ad_generator_path)
 
             if (i + 1) % update_every == 0: # !!! Do not update generator every batch, since it does not conform to Monte Carlo's requirements which requires a sufficient number of samples
