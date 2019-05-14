@@ -1,4 +1,4 @@
-cd /content/gdrive/My Drive/gitrepo/image_captioning_seqgan
+cd '/content/gdrive/My Drive/gitrepo/image_captioning_seqgan'
 if [ -f "data/resized2014.tar.gz" ]
 then :
 else
