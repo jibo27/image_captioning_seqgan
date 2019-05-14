@@ -576,7 +576,6 @@ class Generator(torch.nn.Module):
             
             for index in range(batch_size):
                 batch_loss = 0.0 # loss of the current batch
-                debug_rewards = list()
                 for timestep in range(decoder_lengths[index]):
                     curr_idx = actions[index][timestep]
                     log_prob = y_predicted[index][timestep][curr_idx] # log probability of curr index/word. Note that log_softmax has already been called
@@ -584,7 +583,6 @@ class Generator(torch.nn.Module):
                     reward = rewards[index][timestep] 
                     # ~~~ I think the rewards in front of the sentence should not be too high, since they have less affect in the future ~~~
                     reward = reward * (1.0 / (gamma ** (decoder_lengths[index] - timestep)))
-                    debug_rewards.append(reward.cpu().item())
 
 #                    print('-'*30)
 #                    print('prob:', prob)
@@ -592,7 +590,6 @@ class Generator(torch.nn.Module):
 #                    print('-'*30)
                     #print('timestep:', timestep, 'reward:', reward)
                     batch_loss += - log_prob * reward # Policy Gradient
-                print('debug_rewards:', debug_rewards)
                 #print('batch_loss:', batch_loss)
                 #print('batch_loss / decoder_lengths[index]:', batch_loss / decoder_lengths[index])
                 ad_loss += batch_loss / decoder_lengths[index]
