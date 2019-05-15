@@ -8,7 +8,7 @@ decoder_path = 'data/decoder_params.pkl'
 vocab_path = 'data/vocab.pkl'
 discriminator_path = 'data/discriminator_params.pkl'
 
-batch_size = 16
+#batch_size = 16
 num_workers = 2
 crop_size = 224
 #embedding_size = 256 # May 5, 2019
