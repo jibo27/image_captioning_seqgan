@@ -24,7 +24,7 @@ def main(args):
                             shuffle=True, num_workers=num_workers)
 
        
-    generator = Generator(attention_dim, embedding_size, lstm_size, vocab_size, load=args.load)
+    generator = Generator(attention_dim, embedding_size, lstm_size, vocab_size, load_path=args.g_path)
     generator = generator.to(device)
     generator = generator.eval()
 
@@ -45,7 +45,7 @@ def main(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--load', type=str, default='pre', help='which model to load') # 'pre' or 'ad'
+    parser.add_argument('--g_path', type=str, default='data/generator_params.pkl', help='which model to load') # 'pre' or 'ad'
     parser.add_argument('--image_dir', type=str, default='data/images', help='')
     args = parser.parse_args()
     main(args)

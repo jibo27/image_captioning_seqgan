@@ -29,7 +29,7 @@ def main(args):
                             crop_size,
                             shuffle=True, num_workers=num_workers)
 
-    generator = Generator(attention_dim, embedding_size, lstm_size, vocab_size, load=args.load)
+    generator = Generator(attention_dim, embedding_size, lstm_size, vocab_size, load_path=args.g_path)
     generator = generator.to(device)
     generator = generator.train()
 
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--pre_train', type=str, default='gd', help='mode of pre-train')
-    parser.add_argument('--load', type=str, default='pre', help='mode of pre-train') # 'pre' / 'ad'
+    parser.add_argument('--g_path', type=str, default='data/generator_params.pkl', help='')
     parser.add_argument('--gamma', type=float, default=2.0, help='')
     parser.add_argument('--update_every', type=int, default=20, help='')
     args = parser.parse_args()
