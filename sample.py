@@ -19,7 +19,7 @@ def main(args):
     print('vocab_size:', vocab_size)
 
     dataloader = get_loader(image_dir, caption_path, vocab, 
-                            batch_size,
+                            args.batch_size,
                             crop_size,
                             shuffle=True, num_workers=num_workers)
 
@@ -47,5 +47,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--g_path', type=str, default='data/generator_params.pkl', help='which model to load') # 'pre' or 'ad'
     parser.add_argument('--image_dir', type=str, default='data/images', help='')
+    parser.add_argument('--batch_size', type=int, default=16, help='')
     args = parser.parse_args()
     main(args)

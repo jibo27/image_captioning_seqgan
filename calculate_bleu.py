@@ -37,7 +37,7 @@ def main(args):
 
 
     dataloader = get_loader(image_dir, caption_path, vocab, 
-                            batch_size,
+                            args.batch_size,
                             crop_size,
                             shuffle=False, num_workers=num_workers, transform=transform)
 
@@ -88,8 +88,8 @@ def main(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--g_path', type=str, default='data/generator_params.pkl',
-                        help='the generator model to load')
+    parser.add_argument('--g_path', type=str, default='data/generator_params.pkl', help='the generator model to load')
+    parser.add_argument('--batch_size', type=int, default=16, help='')
     args = parser.parse_args()
     main(args)
 
