@@ -42,7 +42,7 @@ def main(args):
                             shuffle=False, num_workers=num_workers, transform=transform)
 
 
-    generator = Generator(attention_dim, embedding_size, lstm_size, vocab_size, load=args.load)
+    generator = Generator(attention_dim, embedding_size, lstm_size, vocab_size, load_path=args.g_path)
     generator = generator.to(device)
     generator = generator.eval()
 
@@ -88,7 +88,7 @@ def main(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--load', type=str, default='pre',
+    parser.add_argument('--g_path', type=str, default='data/generator_params.pkl',
                         help='the generator model to load')
     args = parser.parse_args()
     main(args)
