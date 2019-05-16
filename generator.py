@@ -538,14 +538,14 @@ class Generator(torch.nn.Module):
 
             if self.noise:
                 noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
-                features = torch.cat([features, noise], dim=3)
-            features = features.view(features.size(0), -1, features.size(-1))
+                features_noise = torch.cat([features, noise], dim=3)
+            features_noise = features_noise.view(features_noise.size(0), -1, features_noise.size(-1))
 
-            # sort features and captions_pred based on the length of captions_pred
+            # sort features_noise and captions_pred based on the length of captions_pred
             sorted_indices, captions_pred = zip(*sorted(enumerate(captions_pred), key=lambda x: len(x[1]), reverse=True))
             sorted_indices = list(sorted_indices)
             captions_pred = list(captions_pred)
-            features = features[list(sorted_indices)]
+            features_noise = features_noise[list(sorted_indices)]
 
             lengths_pred = [len(caption_pred) for caption_pred in captions_pred]
             
@@ -555,12 +555,12 @@ class Generator(torch.nn.Module):
             captions_pred = torch.LongTensor(captions_pred).to(device)
 
             #------------------------ Estimate Rewards -------------------------
-            #rewards = discriminator.predict(features, captions_pred, lengths_pred, device) # (batch_size,)
+            #rewards = discriminator.predict(features_noise, captions_pred, lengths_pred, device) # (batch_size,)
 
             #------------------------ Initialize states for Attention -------------------------
-            mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
-            hidden_state = self.decoder.h_fc(mean_features) # (batch_size, lstm_size)
-            cell_state = self.decoder.c_fc(mean_features) # (batch_size, lstm_size)
+            mean_features_noise = features_noise.mean(dim=1) # (batch_size, encoder_dim)
+            hidden_state = self.decoder.h_fc(mean_features_noise) # (batch_size, lstm_size)
+            cell_state = self.decoder.c_fc(mean_features_noise) # (batch_size, lstm_size)
 
             # ------------------- Run LSTM --------------------------
             decoder_lengths = [length_pred - 1 for length_pred in lengths_pred] # remove <eos>
@@ -573,7 +573,7 @@ class Generator(torch.nn.Module):
                 curr_batch_size = sum([l > step for l in decoder_lengths])
 
                 # get attention_weighted_encoding
-                awe, _ = self.decoder.attention(features[:curr_batch_size], hidden_state[:curr_batch_size]) # (curr_batch_size, encoder_dim)
+                awe, _ = self.decoder.attention(features_noise[:curr_batch_size], hidden_state[:curr_batch_size]) # (curr_batch_size, encoder_dim)
                 gate = self.decoder.sigmoid(self.decoder.f_beta(hidden_state[:curr_batch_size])) # (curr_batch_size, encoder_dim)
                 awe = gate * awe # (curr_batch_size, encoder_dim)
 
