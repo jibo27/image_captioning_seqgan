@@ -68,7 +68,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--pre_train', type=str, default='gd', help='mode of pre-train')
-    parser.add_argument('--g_path', type=str, default='data/generator_params.pkl', help='')
+    parser.add_argument('--g_path', type=str, default=None, help='')
     parser.add_argument('--gamma', type=float, default=2.0, help='')
     parser.add_argument('--update_every', type=int, default=20, help='')
     parser.add_argument('--batch_size', type=int, default=16, help='') # Colab cannot run other codes if batch_size is set to be 16
