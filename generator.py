@@ -426,7 +426,6 @@ class Generator(torch.nn.Module):
             img_path: string. Fullname of the path of the image
             features: (batch_size, enc_img_size, enc_img_size, encoder_dim)
         '''
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # ---------------------- Preprocess images -------------------------------
         if img_path is not None:
             transforms = T.Compose([
@@ -530,16 +529,18 @@ class Generator(torch.nn.Module):
 
             with torch.no_grad():
                 features = self.encoder(imgs)
-                if self.noise:
-                    noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
-                    features = torch.cat([features, noise], dim=3)
-            #features = features.view(features.size(0), -1, features.size(-1))
 
             batch_size = features.size(0)
 
             #------------------------ Predict Captions -------------------------
             # Perhaps we should not use beamsearch???
-            captions_pred = self.inference(vocab, features=features)
+            captions_pred = self.inference(vocab, features=features) # self.inference contains noise addition
+
+            if self.noise:
+                noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
+                features = torch.cat([features, noise], dim=3)
+            features = features.view(features.size(0), -1, features.size(-1))
+
             # sort features and captions_pred based on the length of captions_pred
             sorted_indices, captions_pred = zip(*sorted(enumerate(captions_pred), key=lambda x: len(x[1]), reverse=True))
             sorted_indices = list(sorted_indices)
