@@ -440,20 +440,6 @@ class Generator(torch.nn.Module):
         elif features is not None:
             pass
         elif image_dir is not None:
-#            transforms = T.Compose([
-#                T.ToTensor(),
-#                T.Normalize((0.485, 0.456, 0.406),
-#                            (0.229, 0.224, 0.225))])
-#            imgs = list()
-#            for filename in os.listdir(image_dir):
-#                fullname = os.path.join(image_dir, filename)
-#                img = Image.open(img_path)
-#                #imgs = transforms(img).to(device).unsqueeze(0)
-#                imgs.append(transforms(img))
-#            imgs = torch.stack(imgs).to(device)
-#
-#            with torch.no_grad():
-#                features = self.encoder(imgs)
             pass
 
         else:

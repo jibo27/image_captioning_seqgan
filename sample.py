@@ -35,7 +35,8 @@ def main(args):
 
         fullname = os.path.join(args.image_dir, filename)
         print(fullname.split('/')[-1].split('.')[0] + ':')
-        print(generator.inference(vocab, img_path=fullname, translate_flag=True))
+        for i in range(3):
+            print(generator.inference(vocab, img_path=fullname, translate_flag=True))
         #fullnames = ['data/giraffe.png', 'data/surf.jpg', 'data/bedroom.jpg']
         #for fullname in fullnames:
             #print(fullname.split('/')[-1].split('.')[0] + ':')
