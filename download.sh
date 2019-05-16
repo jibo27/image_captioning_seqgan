@@ -1,6 +1,8 @@
 cd '/content/gdrive/My Drive/gitrepo/image_captioning_seqgan'
 if [ -f "data/resized2014.tar.gz" ]
-then :
+then
+    cd data
+    tar xf resized2014.tar.gz -C /content
 else
     cd /content
     [ -f train2014.zip ] || wget http://images.cocodataset.org/zips/train2014.zip
