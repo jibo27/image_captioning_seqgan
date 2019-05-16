@@ -29,7 +29,7 @@ def main(args):
                             crop_size,
                             shuffle=True, num_workers=num_workers)
 
-    generator = Generator(attention_dim, embedding_size, lstm_size, vocab_size, load_path=args.g_path)
+    generator = Generator(attention_dim, embedding_size, lstm_size, vocab_size, load_path=args.g_path, noise=args.noise)
     generator = generator.to(device)
     generator = generator.train()
 
@@ -72,6 +72,7 @@ if __name__ == '__main__':
     parser.add_argument('--gamma', type=float, default=2.0, help='')
     parser.add_argument('--update_every', type=int, default=20, help='')
     parser.add_argument('--batch_size', type=int, default=16, help='') # Colab cannot run other codes if batch_size is set to be 16
+    parser.add_argument('--noise', type=bool, default=False, help='')
     args = parser.parse_args()
     main(args)
 

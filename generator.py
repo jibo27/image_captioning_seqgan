@@ -64,7 +64,7 @@ class Attention(torch.nn.Module):
 
 
 class Decoder(torch.nn.Module):
-    def __init__(self, attention_dim, embedding_size, lstm_size, vocab_size, encoder_dim=2048):
+    def __init__(self, attention_dim, embedding_size, lstm_size, vocab_size, encoder_dim): # encoder_dim is not 2048 if noise exists
         super(Decoder, self).__init__()
 
         self.attention_dim = attention_dim
@@ -327,7 +327,7 @@ class Decoder(torch.nn.Module):
 
 
 class Generator(torch.nn.Module):
-    def __init__(self, attention_dim, embedding_size, lstm_size, vocab_size, encoder_dim=2048, generator_path = 'data/generator_params.pkl', ad_generator_path='data/ad_generator_params.pkl', load_path=None):
+    def __init__(self, attention_dim, embedding_size, lstm_size, vocab_size, encoder_dim, generator_path = 'data/generator_params.pkl', ad_generator_path='data/ad_generator_params.pkl', load_path=None, noise=False): # encoder_dim is not 2048 if noise exists
         super(Generator, self).__init__()
 
         # ------------- constants ----------------
@@ -338,13 +338,17 @@ class Generator(torch.nn.Module):
         self.learning_rate_ad = 1e-4
         self.vocab_size = vocab_size
 
+
+        self.noise = noise
+        self.noise_size = 100 if self.noise else 0
+
         # ------------- encoder ----------------
         fine_tune_encoder = False
         self.encoder = Encoder()
         self.encoder.fine_tune(fine_tune_encoder)
 
         # ------------- decoder ----------------
-        self.decoder = Decoder(attention_dim, embedding_size, lstm_size, vocab_size)
+        self.decoder = Decoder(attention_dim, embedding_size, lstm_size, vocab_size, encoder_dim + self.noise_size)
         
         # ------------- load model ----------------
         self.generator_path = generator_path
@@ -362,6 +366,7 @@ class Generator(torch.nn.Module):
 
         self.loss_fn = torch.nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate_ad)
+
     
     def pre_train(self, dataloader, vocab, alpha_c=1.0):
         '''
@@ -375,6 +380,11 @@ class Generator(torch.nn.Module):
             captions = captions.to(device)
 
             features = self.encoder(imgs)
+            if self.noise:
+                noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size)
+                features = torch.cat([features, noise], dim=3)
+
+            
             y_predicted, captions, lengths, alphas = self.decoder(features, captions, lengths)
 
             targets = captions[:, 1:]
@@ -423,6 +433,10 @@ class Generator(torch.nn.Module):
 
             with torch.no_grad():
                 features = self.encoder(imgs)
+                if self.noise:
+                    noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size)
+                    features = torch.cat([features, noise], dim=3)
+
         elif features is not None:
             pass
         elif image_dir is not None:
@@ -524,6 +538,9 @@ class Generator(torch.nn.Module):
 
             with torch.no_grad():
                 features = self.encoder(imgs)
+                if self.noise:
+                    noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size)
+                    features = torch.cat([features, noise], dim=3)
             features = features.view(features.size(0), -1, features.size(-1))
 
             batch_size = features.size(0)
