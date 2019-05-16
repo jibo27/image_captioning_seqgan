@@ -9,7 +9,8 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from generator import Attention
 
 
-from settings import *
+from settings import * # contain device
+
 
 class Discriminator(torch.nn.Module):
     def __init__(self, vocab_size, embedding_size, hidden_size, attention_dim, encoder_dim=2048, dropout=0.2, discriminator_path=discriminator_path, load_path=None):
@@ -93,7 +94,6 @@ class Discriminator(torch.nn.Module):
 
     def fit(self, generator, dataloader, vocab, num_batches=None, alpha_c=1.0):
 
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         num_steps = len(dataloader)
 
         for step, (imgs, captions, lengths) in enumerate(dataloader):
