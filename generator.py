@@ -381,7 +381,7 @@ class Generator(torch.nn.Module):
 
             features = self.encoder(imgs)
             if self.noise:
-                noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size)
+                noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
                 features = torch.cat([features, noise], dim=3)
 
             
@@ -434,7 +434,7 @@ class Generator(torch.nn.Module):
             with torch.no_grad():
                 features = self.encoder(imgs)
                 if self.noise:
-                    noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size)
+                    noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
                     features = torch.cat([features, noise], dim=3)
 
         elif features is not None:
@@ -539,7 +539,7 @@ class Generator(torch.nn.Module):
             with torch.no_grad():
                 features = self.encoder(imgs)
                 if self.noise:
-                    noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size)
+                    noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
                     features = torch.cat([features, noise], dim=3)
             features = features.view(features.size(0), -1, features.size(-1))
 
