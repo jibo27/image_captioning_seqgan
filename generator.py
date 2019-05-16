@@ -64,41 +64,41 @@ class Attention(torch.nn.Module):
 
 
 class Decoder(torch.nn.Module):
-    def __init__(self, attention_dim, embedding_size, lstm_size, vocab_size, encoder_dim): # encoder_dim is not 2048 if noise exists
+    def __init__(self, attention_dim, embedding_size, lstm_size, vocab_size, input_dim): # input_dim is not 2048 if noise exists
         super(Decoder, self).__init__()
 
         self.attention_dim = attention_dim
-        self.encoder_dim = encoder_dim
+        self.input_dim = input_dim
         self.vocab_size = vocab_size
 
         self.embeddings = nn.Embedding(vocab_size, embedding_size)
-        self.rnn_cell = nn.LSTMCell(self.encoder_dim + embedding_size, lstm_size, bias=True)
-        self.h_fc = nn.Linear(self.encoder_dim, lstm_size)
-        self.c_fc = nn.Linear(self.encoder_dim, lstm_size)
-        self.f_beta = nn.Linear(lstm_size, self.encoder_dim)
+        self.rnn_cell = nn.LSTMCell(self.input_dim + embedding_size, lstm_size, bias=True)
+        self.h_fc = nn.Linear(self.input_dim, lstm_size)
+        self.c_fc = nn.Linear(self.input_dim, lstm_size)
+        self.f_beta = nn.Linear(lstm_size, self.input_dim)
         self.dropout = nn.Dropout(0.5)
         self.sigmoid = nn.Sigmoid()
 
 
         self.classifier = nn.Linear(lstm_size, vocab_size)
-        self.attention = Attention(encoder_dim, lstm_size, attention_dim)
+        self.attention = Attention(input_dim, lstm_size, attention_dim)
 
 
     def forward(self, features, captions, lengths, device='cuda'):
         '''
-            features: (batch_size, enc_image_size, enc_image_size, encoder_dim)
+            features: (batch_size, enc_image_size, enc_image_size, input_dim)
             captions: (batch_size, max_length)
             lengths: (batch_size, )
             
         '''
         # flatten features
-        features = features.view(features.size(0), -1, features.size(-1)) # (batch_size, num_pixels, encoder_dim)
+        features = features.view(features.size(0), -1, features.size(-1)) # (batch_size, num_pixels, input_dim)
         
         # embedding
         embeddings = self.embeddings(captions) # (batch_size, max_length, embedding_size)
 
         # initialize LSTM states
-        mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
+        mean_features = features.mean(dim=1) # (batch_size, input_dim)
         hidden_state = self.h_fc(mean_features) # (batch_size, lstm_size)
         cell_state = self.c_fc(mean_features) # (batch_size, lstm_size)
 
@@ -116,11 +116,11 @@ class Decoder(torch.nn.Module):
         for step in range(max(decoder_lengths)):
             curr_batch_size = sum([l > step for l in decoder_lengths])
 
-            attention_weighted_encoding, alpha = self.attention(features[:curr_batch_size], hidden_state[:curr_batch_size]) # (curr_batch_size, encoder_dim)
+            attention_weighted_encoding, alpha = self.attention(features[:curr_batch_size], hidden_state[:curr_batch_size]) # (curr_batch_size, input_dim)
 
-            gate = self.sigmoid(self.f_beta(hidden_state[:curr_batch_size])) # (curr_batch_size, encoder_dim)
+            gate = self.sigmoid(self.f_beta(hidden_state[:curr_batch_size])) # (curr_batch_size, input_dim)
         
-            attention_weighted_encoding = gate * attention_weighted_encoding # (curr_batch_size, encoder_dim)
+            attention_weighted_encoding = gate * attention_weighted_encoding # (curr_batch_size, input_dim)
             hidden_state, cell_state = self.rnn_cell(torch.cat([embeddings[:curr_batch_size, step, :], attention_weighted_encoding], dim=1), (hidden_state[:curr_batch_size], cell_state[:curr_batch_size]))
             y_pred = self.classifier(self.dropout(hidden_state))
             y_predicted[:curr_batch_size, step, :] = y_pred
@@ -132,7 +132,7 @@ class Decoder(torch.nn.Module):
 #    def inference(self, features, pre_input, max_length=30, device='cuda'):
 #        '''
 #            Input:
-#                features: (enc_image_size, enc_image_size, encoder_dim)
+#                features: (enc_image_size, enc_image_size, input_dim)
 #                sos_idx: index of <sos>
 #                pre_input: (pre_length, ): list. e.g., [sos_idx] / [sos_idx, xx_idx, ...]
 #            Output:
@@ -140,14 +140,14 @@ class Decoder(torch.nn.Module):
 #        '''
 #        max_length -= 1 # adjust
 #        # flatten features
-#        features = features.view(1, -1, features.size(-1)) # (batch_size, num_pixels, encoder_dim)
+#        features = features.view(1, -1, features.size(-1)) # (batch_size, num_pixels, input_dim)
 #
 #        # embedding
 #        #inputs = self.embeddings(torch.Tensor([sos_idx]).long().to(device)) # (batch_size=1, embedding_size)
 #        embeddings = self.embeddings(torch.LongTensor(pre_input).unsqueeze(0).to(device)) # (batch_size=1, pre_length, embedding_size)
 #
 #        # initialize LSTM states
-#        mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
+#        mean_features = features.mean(dim=1) # (batch_size, input_dim)
 #        hidden_state = self.h_fc(mean_features) # (batch_size, lstm_size)
 #        cell_state = self.c_fc(mean_features) # (batch_size, lstm_size)
 #
@@ -160,9 +160,9 @@ class Decoder(torch.nn.Module):
 #        inputs = embeddings[:, 0, :]
 #        for step in range(max_length):
 #            # get attention
-#            attention_weighted_encoding, alpha = self.attention(features, hidden_state) # (curr_batch_size, encoder_dim)
-#            gate = self.sigmoid(self.f_beta(hidden_state)) # (curr_batch_size, encoder_dim)
-#            attention_weighted_encoding = gate * attention_weighted_encoding # (curr_batch_size, encoder_dim)
+#            attention_weighted_encoding, alpha = self.attention(features, hidden_state) # (curr_batch_size, input_dim)
+#            gate = self.sigmoid(self.f_beta(hidden_state)) # (curr_batch_size, input_dim)
+#            attention_weighted_encoding = gate * attention_weighted_encoding # (curr_batch_size, input_dim)
 #            hidden_state, cell_state = self.rnn_cell(torch.cat([inputs, attention_weighted_encoding], dim=1), (hidden_state, cell_state))
 #            y_pred = self.classifier(hidden_state)
 #
@@ -179,7 +179,7 @@ class Decoder(torch.nn.Module):
     def inference2(self, features, pre_input, max_length=30, device='cuda'):
         '''
             Input:
-                features: (batch_size, num_pixels, encoder_dim)
+                features: (batch_size, num_pixels, input_dim)
                 pre_input: (batch_size, pre_length, ): list. e.g., [sos_idx] / [sos_idx, xx_idx, ...]
             Output:
                 captions: (batch_size, max_length)
@@ -192,7 +192,7 @@ class Decoder(torch.nn.Module):
         embeddings = self.embeddings(pre_input) # (batch_size, pre_length, embedding_size)
 
         # initialize LSTM states
-        mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
+        mean_features = features.mean(dim=1) # (batch_size, input_dim)
         hidden_state = self.h_fc(mean_features) # (batch_size, lstm_size)
         cell_state = self.c_fc(mean_features) # (batch_size, lstm_size)
 
@@ -206,9 +206,9 @@ class Decoder(torch.nn.Module):
         inputs = embeddings[:, 0, :]
         for step in range(max_length):
             # get attention
-            awe, alpha = self.attention(features, hidden_state) # (curr_batch_size, encoder_dim)
-            gate = self.sigmoid(self.f_beta(hidden_state)) # (curr_batch_size, encoder_dim)
-            awe = gate * awe # (curr_batch_size, encoder_dim)
+            awe, alpha = self.attention(features, hidden_state) # (curr_batch_size, input_dim)
+            gate = self.sigmoid(self.f_beta(hidden_state)) # (curr_batch_size, input_dim)
+            awe = gate * awe # (curr_batch_size, input_dim)
             hidden_state, cell_state = self.rnn_cell(torch.cat([inputs, awe], dim=1), (hidden_state, cell_state))
             y_pred = self.classifier(hidden_state)
 
@@ -232,23 +232,23 @@ class Decoder(torch.nn.Module):
 
     def inference_beamsearch(self, features, sos_idx, eos_idx, beam_size=20, max_length=30, all_captions=False, device='cuda'):
         '''
-            features: (1, enc_image_size, enc_image_size, encoder_dim)
+            features: (1, enc_image_size, enc_image_size, input_dim)
             sos_idx: index of <sos>
             beam_size: 20 based on the paper "Show and Tell: A Neural Image Caption Generator"
         '''
         max_length -= 1 # adjust
         # flatten features
-        features = features.view(1, -1, features.size(-1)) # (1, num_pixels, encoder_dim)
+        features = features.view(1, -1, features.size(-1)) # (1, num_pixels, input_dim)
         batch_size = features.size(0)
         num_pixels = features.size(1)
-        features = features.expand(beam_size, num_pixels, features.size(-1)) # (beam_size, num_pixels, encoder_dim)
+        features = features.expand(beam_size, num_pixels, features.size(-1)) # (beam_size, num_pixels, input_dim)
         
         # embedding
         curr_indices = torch.Tensor([sos_idx] * beam_size).long() # (beam_size,)
         inputs = self.embeddings(torch.LongTensor(curr_indices).to(device)) # (beam_size, embedding_size)
 
         # initialize LSTM states
-        mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
+        mean_features = features.mean(dim=1) # (batch_size, input_dim)
         hidden_state = self.h_fc(mean_features) # (batch_size, lstm_size)
         cell_state = self.c_fc(mean_features) # (batch_size, lstm_size)
 
@@ -265,9 +265,9 @@ class Decoder(torch.nn.Module):
         complete_scores = list()
         for step in range(max_length):
             # get attention
-            attention_weighted_encoding, _ = self.attention(features, hidden_state) # (curr_batch_size, encoder_dim)
-            gate = self.sigmoid(self.f_beta(hidden_state)) # (curr_batch_size, encoder_dim)
-            attention_weighted_encoding = gate * attention_weighted_encoding # (curr_batch_size, encoder_dim)
+            attention_weighted_encoding, _ = self.attention(features, hidden_state) # (curr_batch_size, input_dim)
+            gate = self.sigmoid(self.f_beta(hidden_state)) # (curr_batch_size, input_dim)
+            attention_weighted_encoding = gate * attention_weighted_encoding # (curr_batch_size, input_dim)
 
             hidden_state, cell_state = self.rnn_cell(torch.cat([inputs, attention_weighted_encoding], dim=1), (hidden_state, cell_state))
             y_pred = self.classifier(hidden_state) # (k, vocab_size)
@@ -327,7 +327,7 @@ class Decoder(torch.nn.Module):
 
 
 class Generator(torch.nn.Module):
-    def __init__(self, attention_dim, embedding_size, lstm_size, vocab_size, encoder_dim, generator_path = 'data/generator_params.pkl', ad_generator_path='data/ad_generator_params.pkl', load_path=None, noise=False): # encoder_dim is not 2048 if noise exists
+    def __init__(self, attention_dim, embedding_size, lstm_size, vocab_size, encoder_dim=2048, generator_path = 'data/generator_params.pkl', ad_generator_path='data/ad_generator_params.pkl', load_path=None, noise=False): # encoder_dim is not 2048 if noise exists
         super(Generator, self).__init__()
 
         # ------------- constants ----------------
