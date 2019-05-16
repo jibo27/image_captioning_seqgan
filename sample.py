@@ -34,8 +34,10 @@ def main(args):
         fullname = os.path.join(args.image_dir, filename)
         print(fullname.split('/')[-1].split('.')[0] + ':')
         caption_set = set()
-        while len(caption_set) != 3: # must generate 3 unique results
+        max_iter = 50
+        while len(caption_set) != 3 and max_iter != 0: # must generate 3 unique results
             caption_set.add(generator.inference(vocab, img_path=fullname, translate_flag=True))
+            max_iter -= 1
         for caption in caption_set:
             print(caption)
 
