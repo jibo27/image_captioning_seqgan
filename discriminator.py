@@ -103,10 +103,13 @@ class Discriminator(torch.nn.Module):
             batch_size = captions.size(0)
 
             features = generator.encoder(imgs)
-            print(features.shape)
-            #features = features.view(features.size(0), -1, features.size(-1))
             captions_pred = generator.inference(vocab, features=features) # list, (batch_size, var_length). eg: [[1, 4, ... , 19, 2]], containing <sos> and <eos>
-            print(features.shape)
+            # Note: the shape of <features> remain unchanged, i.e., (batch_size, enc_img_size, enc_img_size, encoder_dim)
+
+
+
+            features = features.view(features.size(0), -1, features.size(-1))
+
             # sort captions_pred, features
             sorted_indices, captions_pred = zip(*sorted(enumerate(captions_pred), key=lambda x: len(x[1]), reverse=True))
             sorted_indices = list(sorted_indices)
@@ -120,16 +123,6 @@ class Discriminator(torch.nn.Module):
                 captions_pred[index] = caption_pred + [0] * (max_length_pred - len(caption_pred))
             
             captions_pred = torch.LongTensor(captions_pred).to(device)
-            #lengths_pred = list()
-            #for i in range(batch_size):
-                #lengths_pred = len(captions_pred[i]) if len(tmp_captions_pred[i]) < captions.size(1) else captions.size(1)
-
-            #captions, _ = pack_padded_sequence(captions, lengths, batch_first=True)
-
-            #captions_pred, _ = pack_padded_sequence(captions_pred, max_lengths_pred, batch_first=True)
-            
-            batch_size = features.size(0)
-            num_pixels = features.size(1)
             
             #-------------------------- RUN RNN ---------------------------------------
             D_real = self.predict(features, captions, lengths, device) # (batch_size, )
