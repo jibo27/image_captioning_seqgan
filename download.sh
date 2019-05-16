@@ -16,7 +16,7 @@ fi
 cd /content
 [ -f annotations_trainval2014.zip ] || wget http://images.cocodataset.org/annotations/annotations_trainval2014.zip
 [ -d annotations ] || unzip -q annotations_trainval2014.zip
-rm captions_train-val2014.zip
+rm annotations_trainval2014.zip
 
 pip install nltk
 python -c 'import nltk; nltk.download("punkt")'
