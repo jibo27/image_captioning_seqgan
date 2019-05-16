@@ -523,8 +523,6 @@ class Generator(torch.nn.Module):
                 gamma: reduce the reward
                 update_every: the intervals between updates
         '''
-
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         num_steps = len(dataloader)
 
         for i, (imgs, _1, _2) in enumerate(dataloader):
@@ -593,9 +591,6 @@ class Generator(torch.nn.Module):
             y_predicted = F.log_softmax(y_predicted, dim=2) # (batch_size, max_decoder_length, vocab_size)
 
             ad_loss = 0
-            baseline = 0 # make the rewards that less than 0.5 to be negative so that the "too fake" captions are punished
-            # ADVISE: If we train the discriminator, the generator reward will be decreased dramatically. For example, the initial reward was about 0.56, but it quickly becomes 0.3 after about 30 batches. So in my opinion, we should remove the baseline or reduce the baseline.
-
             rewards = self.estimate_rewards(features, captions_pred, lengths_pred, vocab, discriminator, num_rollouts) # (batch_size, decoder_lengths)
             
             for index in range(batch_size):
@@ -603,14 +598,12 @@ class Generator(torch.nn.Module):
                 for timestep in range(decoder_lengths[index]):
                     curr_idx = actions[index][timestep]
                     log_prob = y_predicted[index][timestep][curr_idx] # log probability of curr index/word. Note that log_softmax has already been called
-                    #ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index][timestep] - baseline)
+                    #ad_loss += -y_predicted[index][timestep][actions[index][timestep]] * (rewards[index][timestep])
                     reward = rewards[index][timestep] 
                     # ~~~ I think the rewards in front of the sentence should not be too high, since they have less affect in the future ~~~
                     #reward = reward * (1.0 / (gamma ** (decoder_lengths[index] - timestep)))
 
                     batch_loss += - log_prob * reward # Policy Gradient
-                #print('batch_loss:', batch_loss)
-                #print('batch_loss / decoder_lengths[index]:', batch_loss / decoder_lengths[index])
                 #ad_loss += batch_loss / decoder_lengths[index]
                 ad_loss += batch_loss # According to the formula, the loss is the summation rather than mean
 
@@ -629,7 +622,7 @@ class Generator(torch.nn.Module):
                 ad_generator_path = 'data/pkl/ad_generator_params.pkl'
                 torch.save(self.state_dict(), ad_generator_path)
 
-                if (i + 1) % 200 == 0:
+                if (i + 1) % 100 == 0:
                     print('Start saving ad_generator %d'%(i + 1))
                     ad_generator_path = 'data/pkl/ad_generator_params_%d.pkl'%(i + 1)
                     torch.save(self.state_dict(), ad_generator_path)
