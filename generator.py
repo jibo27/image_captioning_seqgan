@@ -424,6 +424,7 @@ class Generator(torch.nn.Module):
         '''
             Generate captions from image path.
             img_path: string. Fullname of the path of the image
+            features: (batch_size, enc_img_size, enc_img_size, encoder_dim)
         '''
         device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         # ---------------------- Preprocess images -------------------------------
@@ -451,6 +452,8 @@ class Generator(torch.nn.Module):
         if self.noise:
             noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
             features = torch.cat([features, noise], dim=3)
+
+        features.view(features.shape[0], -1, features.shape[-1])
 
         # ---------------------- Generate captions from image features -------------------------------
         #captions = self.sample(features, vocab) # (batch_size, seq_length)
@@ -532,10 +535,9 @@ class Generator(torch.nn.Module):
                 if self.noise:
                     noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
                     features = torch.cat([features, noise], dim=3)
-            features = features.view(features.size(0), -1, features.size(-1))
+            #features = features.view(features.size(0), -1, features.size(-1))
 
             batch_size = features.size(0)
-            num_pixels = features.size(1)
 
             #------------------------ Predict Captions -------------------------
             # Perhaps we should not use beamsearch???
