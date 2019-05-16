@@ -39,6 +39,8 @@ def main(args):
 
 
     
+
+    
     if args.train_mode == 'gd':
         for _ in range(5):
             for i in range(4):

@@ -465,10 +465,10 @@ class Generator(torch.nn.Module):
                 return captions
 
 
-    def estimate_rewards(self, features, captions_pred, lengths_pred, vocab, discriminator): 
+    def estimate_rewards(self, features, captions_pred, lengths_pred, vocab, discriminator, num_rollouts=16): 
         '''
             Input:
-                ! SORT BY lengths_pred !
+                ! SORTED BY lengths_pred !
                 lengths_pred: including <sos> & <eos>
             Output:
                 reward: (batch_size, decoder_lengths)
@@ -481,9 +481,7 @@ class Generator(torch.nn.Module):
 
         decoder_lengths = [length_pred - 1 for length_pred in lengths_pred] # remove <eos>, since the reward at the position of <eos> does not have corresponding log_action to multiply
 
-        y_predicted = torch.zeros(batch_size, max(decoder_lengths), self.vocab_size).to(device)
         rewards = torch.zeros(batch_size, max(decoder_lengths)).to(device)
-        actions = torch.zeros(batch_size, max(decoder_lengths)).long().to(device)
 
         for step in range(max(decoder_lengths)):
             curr_batch_size = sum([l > step for l in decoder_lengths])
@@ -491,8 +489,6 @@ class Generator(torch.nn.Module):
             inputs = captions_pred[:curr_batch_size, :step + 1] # (curr_batch_size, step + 1)
             
             captions_step = self.decoder.inference2(features[:curr_batch_size], inputs) # (curr_batch_size, max_length=30)
-            #print('curr_batch_size:', curr_batch_size)
-            #print('captions:', captions_step)
 
             # get lengths_step
             lengths_step = list() # (curr_batch_size)
