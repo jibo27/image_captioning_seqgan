@@ -84,7 +84,7 @@ class Decoder(torch.nn.Module):
         self.attention = Attention(input_dim, lstm_size, attention_dim)
 
 
-    def forward(self, features, captions, lengths, device='cuda'):
+    def forward(self, features, captions, lengths):
         '''
             features: (batch_size, enc_image_size, enc_image_size, input_dim)
             captions: (batch_size, max_length)
@@ -129,7 +129,7 @@ class Decoder(torch.nn.Module):
         return y_predicted, captions, decoder_lengths, alphas
 
 
-#    def inference(self, features, pre_input, max_length=30, device='cuda'):
+#    def inference(self, features, pre_input, max_length=30):
 #        '''
 #            Input:
 #                features: (enc_image_size, enc_image_size, input_dim)
@@ -176,11 +176,12 @@ class Decoder(torch.nn.Module):
 #
 #        return captions
 
-    def inference2(self, features, pre_input, max_length=30, device='cuda'):
+    def inference2(self, features, pre_input, max_length=30, pred_mode='max'):
         '''
             Input:
                 features: (batch_size, num_pixels, input_dim)
                 pre_input: (batch_size, pre_length, ): list. e.g., [sos_idx] / [sos_idx, xx_idx, ...]
+                pred_mode: Mode of predicting the next work from the output of LSTM cell. Default value is 'max', which means take the word with the max probability. Whereas 'prob' chooses the word based on the distribution
             Output:
                 captions: (batch_size, max_length)
         '''
@@ -206,9 +207,9 @@ class Decoder(torch.nn.Module):
         inputs = embeddings[:, 0, :]
         for step in range(max_length):
             # get attention
-            awe, alpha = self.attention(features, hidden_state) # (curr_batch_size, input_dim)
-            gate = self.sigmoid(self.f_beta(hidden_state)) # (curr_batch_size, input_dim)
-            awe = gate * awe # (curr_batch_size, input_dim)
+            awe, alpha = self.attention(features, hidden_state) # (batch_size, input_dim)
+            gate = self.sigmoid(self.f_beta(hidden_state)) # (batch_size, input_dim)
+            awe = gate * awe # (batch_size, input_dim)
             hidden_state, cell_state = self.rnn_cell(torch.cat([inputs, awe], dim=1), (hidden_state, cell_state))
             y_pred = self.classifier(hidden_state)
 
@@ -216,7 +217,10 @@ class Decoder(torch.nn.Module):
             #captions[:, step] = y_pred
             #captions.append(y_pred)
             if step + 1 >= pre_length:
-                _, y_pred = y_pred.max(1) # y_pred: (batch_size, )
+                if pred_mode == 'prob':
+                    y_pred = torch.multinomial(torch.softmax(y_pred, dim=1), 1).squeeze(1) # (batch_size, )
+                else:
+                    _, y_pred = y_pred.max(1) # y_pred: (batch_size, )
                 #captions[:, step] = pre_input[:, step]
                 captions[:, step] = y_pred
                 inputs = self.embeddings(y_pred)
@@ -230,7 +234,7 @@ class Decoder(torch.nn.Module):
 
 
 
-    def inference_beamsearch(self, features, sos_idx, eos_idx, beam_size=20, max_length=30, all_captions=False, device='cuda'):
+    def inference_beamsearch(self, features, sos_idx, eos_idx, beam_size=20, max_length=30, all_captions=False):
         '''
             features: (1, enc_image_size, enc_image_size, input_dim)
             sos_idx: index of <sos>
@@ -483,29 +487,32 @@ class Generator(torch.nn.Module):
 
         rewards = torch.zeros(batch_size, max(decoder_lengths)).to(device)
 
-        for step in range(max(decoder_lengths)):
-            curr_batch_size = sum([l > step for l in decoder_lengths])
-            # inputs
-            inputs = captions_pred[:curr_batch_size, :step + 1] # (curr_batch_size, step + 1)
-            
-            captions_step = self.decoder.inference2(features[:curr_batch_size], inputs) # (curr_batch_size, max_length=30)
+        for i in range(num_rollouts):
+            for step in range(max(decoder_lengths)):
+                curr_batch_size = sum([l > step for l in decoder_lengths])
+                # get current incomplete captions
+                inputs = captions_pred[:curr_batch_size, :step + 1] # (curr_batch_size, step + 1)
+                
+                # infer complete captions from current partial captions
+                captions_step = self.decoder.inference2(features[:curr_batch_size], inputs, pred_mode='prob') # (curr_batch_size, max_length=30)
 
-            # get lengths_step
-            lengths_step = list() # (curr_batch_size)
-            for caption_step in captions_step:
-                l = list(caption_step.cpu().numpy())
-                if vocab.word2idx['<eos>'] in l:
-                    eos_pos = list(caption_step.cpu().numpy()).index(vocab.word2idx['<eos>']) # find pos of <eos>
-                else:
-                    eos_pos = len(l) - 1
-                lengths_step.append(eos_pos + 1)
+                # compute lengths_step
+                lengths_step = list() # (curr_batch_size)
+                for caption_step in captions_step:
+                    l = list(caption_step.cpu().numpy())
+                    if vocab.word2idx['<eos>'] in l:
+                        eos_pos = list(caption_step.cpu().numpy()).index(vocab.word2idx['<eos>']) # find pos of <eos>
+                    else:
+                        eos_pos = len(l) - 1
+                    lengths_step.append(eos_pos + 1)
 
-            # if captions contain <eos>
-            rewards[:curr_batch_size, step] = discriminator.predict(features[:curr_batch_size], captions_step, lengths_step, device) # predict needs captions that contain <eos>
+                # calculate the probability of being true for the predicted complete sentences as the reward for current timestep
+                rewards[:curr_batch_size, step] = discriminator.predict(features[:curr_batch_size], captions_step, lengths_step, device) # predict needs captions that contain <eos>
+        rewards /= num_rollouts
 
         return rewards # (batch_size, max(decoder_lengths))
             
-    def ad_train(self, dataloader, discriminator, vocab, gamma=2.0, update_every=20, num_batches=None, alpha_c=1.0):
+    def ad_train(self, dataloader, discriminator, vocab, gamma=2.0, update_every=20, num_rollouts=16, num_batches=None, alpha_c=1.0):
         '''
             Input:
                 gamma: reduce the reward
@@ -585,7 +592,7 @@ class Generator(torch.nn.Module):
             baseline = 0 # make the rewards that less than 0.5 to be negative so that the "too fake" captions are punished
             # ADVISE: If we train the discriminator, the generator reward will be decreased dramatically. For example, the initial reward was about 0.56, but it quickly becomes 0.3 after about 30 batches. So in my opinion, we should remove the baseline or reduce the baseline.
 
-            rewards = self.estimate_rewards(features, captions_pred, lengths_pred, vocab, discriminator) # (batch_size, decoder_lengths)
+            rewards = self.estimate_rewards(features, captions_pred, lengths_pred, vocab, discriminator, num_rollouts) # (batch_size, decoder_lengths)
             
             for index in range(batch_size):
                 batch_loss = 0.0 # loss of the current batch

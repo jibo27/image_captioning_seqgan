@@ -56,7 +56,7 @@ def main(args):
         generator.pre_train(dataloader, vocab)
     elif args.train_mode == 'ad':
         for i in range(5):
-            generator.ad_train(dataloader, discriminator, vocab, gamma=args.gamma, update_every=args.update_every, alpha_c=1.0)
+            generator.ad_train(dataloader, discriminator, vocab, gamma=args.gamma, update_every=args.update_every, alpha_c=1.0, num_rollouts=args.num_rollouts)
 
 #    for i in range(5):
 #        print("D")
@@ -75,6 +75,7 @@ if __name__ == '__main__':
     parser.add_argument('--update_every', type=int, default=20, help='')
     parser.add_argument('--batch_size', type=int, default=16, help='') # Colab cannot run other codes if batch_size is set to be 16
     parser.add_argument('--noise', type=bool, default=False, help='')
+    parser.add_argument('--num_rollouts', type=int, default=16, help='')
     args = parser.parse_args()
     main(args)
 
