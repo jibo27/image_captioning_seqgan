@@ -39,20 +39,20 @@ def main(args):
 
 
     
-    if args.pre_train == 'gd':
+    if args.train_mode == 'gd':
         for _ in range(5):
             for i in range(4):
                 generator.pre_train(dataloader, vocab)
             for i in range(1):
                 discriminator.fit(generator, dataloader, vocab)
-    elif args.pre_train == 'dg':
+    elif args.train_mode == 'dg':
         discriminator.fit(generator, dataloader, vocab)
         generator.pre_train(dataloader, vocab)
-    elif args.pre_train == 'd':
+    elif args.train_mode == 'd':
         discriminator.fit(generator, dataloader, vocab)
-    elif args.pre_train == 'g':
+    elif args.train_mode == 'g':
         generator.pre_train(dataloader, vocab)
-    elif args.pre_train == 'ad':
+    elif args.train_mode == 'ad':
         for i in range(5):
             generator.ad_train(dataloader, discriminator, vocab, gamma=args.gamma, update_every=args.update_every, alpha_c=1.0)
 
@@ -67,7 +67,7 @@ def main(args):
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--pre_train', type=str, default='gd', help='mode of pre-train')
+    parser.add_argument('--train_mode', type=str, default='gd', help='mode of pre-train')
     parser.add_argument('--g_path', type=str, default=None, help='')
     parser.add_argument('--gamma', type=float, default=2.0, help='')
     parser.add_argument('--update_every', type=int, default=20, help='')
