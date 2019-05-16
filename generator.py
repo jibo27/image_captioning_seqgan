@@ -437,9 +437,6 @@ class Generator(torch.nn.Module):
 
             with torch.no_grad():
                 features = self.encoder(imgs)
-                if self.noise:
-                    noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
-                    features = torch.cat([features, noise], dim=3)
 
         elif features is not None:
             pass
@@ -449,6 +446,11 @@ class Generator(torch.nn.Module):
         else:
             print('ERROR:inference')
             return None
+
+
+        if self.noise:
+            noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
+            features = torch.cat([features, noise], dim=3)
 
         # ---------------------- Generate captions from image features -------------------------------
         #captions = self.sample(features, vocab) # (batch_size, seq_length)
