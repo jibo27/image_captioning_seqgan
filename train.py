@@ -33,7 +33,7 @@ def main(args):
     generator = generator.to(device)
     generator = generator.train()
 
-    discriminator = Discriminator(vocab_size, embedding_size, lstm_size, attention_dim, load=True)
+    discriminator = Discriminator(vocab_size, embedding_size, lstm_size, attention_dim, load_path=args.d_path)
     discriminator = discriminator.to(device)
     discriminator = discriminator.train()
 
@@ -71,6 +71,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--train_mode', type=str, default='gd', help='mode of pre-train')
     parser.add_argument('--g_path', type=str, default=None, help='')
+    parser.add_argument('--d_path', type=str, default=None, help='')
     parser.add_argument('--gamma', type=float, default=2.0, help='')
     parser.add_argument('--update_every', type=int, default=20, help='')
     parser.add_argument('--batch_size', type=int, default=16, help='') # Colab cannot run other codes if batch_size is set to be 16
