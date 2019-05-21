@@ -61,6 +61,9 @@ class Discriminator(torch.nn.Module):
 
 
     def predict(self, features, captions, lengths, device):
+        '''
+            features: (batch_size, num_pixels, encoder_dim)
+        '''
         decoder_lengths = [length - 1 for length in lengths]
 
         batch_size = features.size(0)

@@ -477,8 +477,8 @@ class Generator(torch.nn.Module):
         '''
             Input:
                 ! SORTED BY lengths_pred !
-                features: used for discriminator since they are deprived of noises
-                features_noise: contain noise and thus used for generator
+                features: used for discriminator since they are deprived of noises. (batch_size, num_pixels, encoder_dim)
+                features_noise: contain noise and thus used for generator: (batch_size, num_pixels, encoder_dim + noise_size)
                 lengths_pred: including <sos> & <eos>
             Output:
                 reward: (batch_size, decoder_lengths)
@@ -544,7 +544,7 @@ class Generator(torch.nn.Module):
             if self.noise:
                 noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
                 features_noise = torch.cat([features, noise], dim=3)
-            features_noise = features_noise.view(features_noise.size(0), -1, features_noise.size(-1))
+            features_noise = features_noise.view(features_noise.size(0), -1, features_noise.size(-1)) # (batch_size, num_pixels, encoder_dim)
 
             # sort features_noise and captions_pred based on the length of captions_pred
             sorted_indices, captions_pred = zip(*sorted(enumerate(captions_pred), key=lambda x: len(x[1]), reverse=True))
@@ -597,6 +597,7 @@ class Generator(torch.nn.Module):
             y_predicted = F.log_softmax(y_predicted, dim=2) # (batch_size, max_decoder_length, vocab_size)
 
             ad_loss = 0
+            features= features.view(features.size(0), -1, features.size(-1)) # (batch_size, num_pixels, encoder_dim)
             rewards = self.estimate_rewards(features, features_noise, captions_pred, lengths_pred, vocab, discriminator, num_rollouts) # (batch_size, decoder_lengths)
             
             for index in range(batch_size):
