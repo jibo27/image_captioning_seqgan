@@ -477,6 +477,8 @@ class Generator(torch.nn.Module):
         '''
             Input:
                 ! SORTED BY lengths_pred !
+                features: used for discriminator since they are deprived of noises
+                features_noise: contain noise and thus used for generator
                 lengths_pred: including <sos> & <eos>
             Output:
                 reward: (batch_size, decoder_lengths)
@@ -501,7 +503,7 @@ class Generator(torch.nn.Module):
                 inputs = captions_pred[:curr_batch_size, :step + 1] # (curr_batch_size, step + 1)
                 
                 # infer complete captions from current partial captions
-                captions_step = self.decoder.inference2(features[:curr_batch_size], inputs, pred_mode='prob') # (curr_batch_size, max_length=30)
+                captions_step = self.decoder.inference2(features_noise[:curr_batch_size], inputs, pred_mode='prob') # (curr_batch_size, max_length=30)
 
                 # compute lengths_step
                 lengths_step = list() # (curr_batch_size)
