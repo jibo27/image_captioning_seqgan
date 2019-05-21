@@ -106,8 +106,6 @@ class Discriminator(torch.nn.Module):
             captions_pred = generator.inference(vocab, features=features) # list, (batch_size, var_length). eg: [[1, 4, ... , 19, 2]], containing <sos> and <eos>
             # Note: the shape of <features> remain unchanged, i.e., (batch_size, enc_img_size, enc_img_size, encoder_dim)
 
-
-
             features = features.view(features.size(0), -1, features.size(-1))
 
             # sort captions_pred, features

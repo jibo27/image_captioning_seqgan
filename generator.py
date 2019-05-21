@@ -473,7 +473,7 @@ class Generator(torch.nn.Module):
                 return captions
 
 
-    def estimate_rewards(self, features, captions_pred, lengths_pred, vocab, discriminator, num_rollouts=16): 
+    def estimate_rewards(self, features, features_noise, captions_pred, lengths_pred, vocab, discriminator, num_rollouts=16): 
         '''
             Input:
                 ! SORTED BY lengths_pred !
@@ -483,7 +483,10 @@ class Generator(torch.nn.Module):
         '''
         batch_size = features.shape[0]
 
-        mean_features = features.mean(dim=1) # (batch_size, encoder_dim)
+        #noise = torch.randn(features.shape[0], features.shape[1], features.shape[2], self.noise_size).to(device)
+        #features_noise = torch.cat([features, noise], dim=3)
+        #features_noise = features_noise.view(features_noise.size(0), -1, features_noise.size(-1))
+        mean_features = features_noise.mean(dim=1) # (batch_size, encoder_dim)
         hidden_state = self.decoder.h_fc(mean_features) # (batch_size, lstm_size)
         cell_state = self.decoder.c_fc(mean_features) # (batch_size, lstm_size)
 
@@ -592,7 +595,7 @@ class Generator(torch.nn.Module):
             y_predicted = F.log_softmax(y_predicted, dim=2) # (batch_size, max_decoder_length, vocab_size)
 
             ad_loss = 0
-            rewards = self.estimate_rewards(features, captions_pred, lengths_pred, vocab, discriminator, num_rollouts) # (batch_size, decoder_lengths)
+            rewards = self.estimate_rewards(features, features_noise, captions_pred, lengths_pred, vocab, discriminator, num_rollouts) # (batch_size, decoder_lengths)
             
             for index in range(batch_size):
                 batch_loss = 0.0 # loss of the current batch
