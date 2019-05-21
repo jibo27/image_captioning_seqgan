@@ -516,7 +516,7 @@ class Generator(torch.nn.Module):
                     lengths_step.append(eos_pos + 1)
 
                 # calculate the probability of being true for the predicted complete sentences as the reward for current timestep
-                with torch.no_grad()
+                with torch.no_grad():
                     rewards[:curr_batch_size, step] = discriminator.predict(features[:curr_batch_size], captions_step, lengths_step, device) # predict needs captions that contain <eos>
         rewards /= num_rollouts
 
