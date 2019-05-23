@@ -108,8 +108,6 @@ def main(args):
                 if index + 1 == num_batches:
                     break
 
-        scores = np.asarray(scores)
-        print(scores.shape)
     write_to_file(dataloader, generator, num_batches)
 
 
