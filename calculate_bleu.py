@@ -58,32 +58,64 @@ def main(args):
     scores = list()
     num_batches = 100
     print('total length:', len(dataloader), '; we chose %d batches'%(num_batches))
-    for index, (imgs, captions, lengths) in tqdm.tqdm(enumerate(dataloader)):
-        imgs = imgs.to(device)
+    def compute_nltk(dataloader, generator, num_batches):
+        for index, (imgs, captions, lengths) in tqdm.tqdm(enumerate(dataloader)):
+            imgs = imgs.to(device)
 
-        features = generator.encoder(imgs)
-        indices_list = generator.inference(vocab, features=features)
-        for i in range(len(indices_list)):
-            sentence_pred = translate(indices_list[i][1:], vocab)
-            sentence = translate(captions[i][1:], vocab)
-            bleus = list()
-            for j in range(4):
-                weights = [0] * 4
-                weights[j] = 1
-                bleus.append(sentence_bleu([sentence], sentence_pred, weights=weights))
-            scores.append(bleus)
-        if index + 1 == num_batches:
-            break
+            features = generator.encoder(imgs)
+            indices_list = generator.inference(vocab, features=features)
+            for i in range(len(indices_list)):
+                sentence_pred = translate(indices_list[i][1:], vocab)
+                sentence = translate(captions[i][1:], vocab)
+                bleus = list()
+                for j in range(4):
+                    weights = [0] * 4
+                    weights[j] = 1
+                    bleus.append(sentence_bleu([sentence], sentence_pred, weights=weights))
+                scores.append(bleus)
+            if index + 1 == num_batches:
+                break
 
-    scores = np.asarray(scores)
-    print(scores.shape)
+        scores = np.asarray(scores)
+        print(scores.shape)
 
-    for i in range(4):
-        print("BLEU{}".format(i + 1))
-        print('mean score:', np.sum(scores[:, i]) / scores.shape[0])
-        print('min score:', np.min(scores[:, i]))
-        print('max score:', np.max(scores[:, i]))
-        print('sum score:', np.sum(scores[:, i]))
+        for i in range(4):
+            print("BLEU{}".format(i + 1))
+            print('mean score:', np.sum(scores[:, i]) / scores.shape[0])
+            print('min score:', np.min(scores[:, i]))
+            print('max score:', np.max(scores[:, i]))
+            print('sum score:', np.sum(scores[:, i]))
+            
+    #compute_nltk(dataloader, generator, num_batches)
+
+
+
+    def write_to_file(dataloader, generator, num_batches):
+        for index, (imgs, captions, lengths) in tqdm.tqdm(enumerate(dataloader)):
+            imgs = imgs.to(device)
+
+            features = generator.encoder(imgs)
+            indices_list = generator.inference(vocab, features=features)
+            with open('data/hyp.txt', 'w') as hyp, open('data/ref.txt', 'w') as ref:
+                for i in range(len(indices_list)):
+                    sentence_pred = translate(indices_list[i][1:], vocab)
+                    sentence = translate(captions[i][1:], vocab)
+
+                    hyp.write(sentence_pred)
+                    ref.write(sentence)
+                
+            if index + 1 == num_batches:
+                break
+
+        scores = np.asarray(scores)
+        print(scores.shape)
+
+        for i in range(4):
+            print("BLEU{}".format(i + 1))
+            print('mean score:', np.sum(scores[:, i]) / scores.shape[0])
+            print('min score:', np.min(scores[:, i]))
+            print('max score:', np.max(scores[:, i]))
+            print('sum score:', np.sum(scores[:, i]))
 
 if __name__ == '__main__':
     import argparse
