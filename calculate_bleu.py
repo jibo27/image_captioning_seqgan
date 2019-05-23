@@ -106,7 +106,8 @@ def main(args):
                     ref.write(sentence + '\n')
                     
                 if index + 1 == num_batches:
-                    break
+                    pass
+                    #break
 
     write_to_file(dataloader, generator, num_batches)
 
