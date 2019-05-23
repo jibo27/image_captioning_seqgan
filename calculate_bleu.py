@@ -89,25 +89,28 @@ def main(args):
     #compute_nltk(dataloader, generator, num_batches)
 
     def write_to_file(dataloader, generator, num_batches):
-        for index, (imgs, captions, lengths) in tqdm.tqdm(enumerate(dataloader)):
-            imgs = imgs.to(device)
+        with open('data/hyp.txt', 'w') as hyp, open('data/ref.txt', 'w') as ref:
+            for index, (imgs, captions, lengths) in enumerate(dataloader):
+                imgs = imgs.to(device)
 
-            features = generator.encoder(imgs)
-            indices_list = generator.inference(vocab, features=features)
+                features = generator.encoder(imgs)
+                indices_list = generator.inference(vocab, features=features)
 
-            with open('data/hyp.txt', 'w') as hyp, open('data/ref.txt', 'w') as ref:
-                for i in range(len(indices_list)):
-                    sentence_pred = translate(indices_list[i][1:], vocab)
-                    sentence = translate(captions[i][1:], vocab)
+                    for i in range(len(indices_list)):
+                        sentence_pred = translate(indices_list[i][1:], vocab)
+                        sentence = translate(captions[i][1:], vocab)
+                        sentence_pred = sentence_pred.strip('<sos> ').strip(' <eos>')
+                        sentence = sentence.strip('<sos> ').strip(' <eos>')
 
-                    hyp.write(sentence_pred)
-                    ref.write(sentence)
-                
-            if index + 1 == num_batches:
-                break
+                        hyp.write(sentence_pred + '\n')
+                        ref.write(sentence + '\n')
+                    
+                if index + 1 == num_batches:
+                    break
 
         scores = np.asarray(scores)
         print(scores.shape)
+    write_to_file(dataloader, generator, num_batches)
 
 
 if __name__ == '__main__':
