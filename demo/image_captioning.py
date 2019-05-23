@@ -53,8 +53,7 @@ def image_captioning(img_path):
     while len(caption_set) != 3 and max_iter != 0: # must generate 3 unique results
         caption_set.add(generator.inference(vocab, img_path=img_path, translate_flag=True))
         max_iter -= 1
-    for caption in caption_set:
-        print(caption.strip('<sos> ').strip(' <eos>'))
+    return caption_set
 
 
     

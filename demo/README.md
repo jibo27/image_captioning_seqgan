@@ -5,7 +5,9 @@
 ## Output
 ```
 Start loading ./generator_params.pkl
-a man riding a wave on a wave .
-a man in a wave on a wave .
-a woman riding a wave in the wave .
+{'<sos> a person on a wave in the surfboard . <eos>', '<sos> a man is surfing on a wave . <eos>', '<sos> a person is surfing board on a surfboard . <eos>'}
+a person on a wave in the surfboard .
+a man is surfing on a wave .
+a person is surfing board on a surfboard .
+
 ```
