@@ -88,14 +88,13 @@ def main(args):
             
     #compute_nltk(dataloader, generator, num_batches)
 
-
-
     def write_to_file(dataloader, generator, num_batches):
         for index, (imgs, captions, lengths) in tqdm.tqdm(enumerate(dataloader)):
             imgs = imgs.to(device)
 
             features = generator.encoder(imgs)
             indices_list = generator.inference(vocab, features=features)
+
             with open('data/hyp.txt', 'w') as hyp, open('data/ref.txt', 'w') as ref:
                 for i in range(len(indices_list)):
                     sentence_pred = translate(indices_list[i][1:], vocab)
@@ -110,12 +109,6 @@ def main(args):
         scores = np.asarray(scores)
         print(scores.shape)
 
-        for i in range(4):
-            print("BLEU{}".format(i + 1))
-            print('mean score:', np.sum(scores[:, i]) / scores.shape[0])
-            print('min score:', np.min(scores[:, i]))
-            print('max score:', np.max(scores[:, i]))
-            print('sum score:', np.sum(scores[:, i]))
 
 if __name__ == '__main__':
     import argparse
