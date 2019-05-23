@@ -96,14 +96,14 @@ def main(args):
                 features = generator.encoder(imgs)
                 indices_list = generator.inference(vocab, features=features)
 
-                    for i in range(len(indices_list)):
-                        sentence_pred = translate(indices_list[i][1:], vocab)
-                        sentence = translate(captions[i][1:], vocab)
-                        sentence_pred = sentence_pred.strip('<sos> ').strip(' <eos>')
-                        sentence = sentence.strip('<sos> ').strip(' <eos>')
+                for i in range(len(indices_list)):
+                    sentence_pred = translate(indices_list[i][1:], vocab)
+                    sentence = translate(captions[i][1:], vocab)
+                    sentence_pred = sentence_pred.strip('<sos> ').strip(' <eos>')
+                    sentence = sentence.strip('<sos> ').strip(' <eos>')
 
-                        hyp.write(sentence_pred + '\n')
-                        ref.write(sentence + '\n')
+                    hyp.write(sentence_pred + '\n')
+                    ref.write(sentence + '\n')
                     
                 if index + 1 == num_batches:
                     break
