@@ -104,6 +104,8 @@ def main(args):
 
                     hyp.write(sentence_pred + '\n')
                     ref.write(sentence + '\n')
+                    hyp.flush()
+                    ref.flush()
                     
                 if index + 1 == num_batches:
                     pass
