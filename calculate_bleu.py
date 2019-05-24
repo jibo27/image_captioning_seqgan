@@ -108,8 +108,7 @@ def main(args):
                     ref.flush()
                     
                 if index + 1 == num_batches:
-                    pass
-                    #break
+                    break
 
     write_to_file(dataloader, generator, num_batches)
 
