@@ -139,7 +139,7 @@ class Discriminator(torch.nn.Module):
             # ----------------------------- Draw loss graph -----------------------
             losses.append(loss.item())
             print('loss=%.6f'%(loss))
-            if index == 100:
+            if step == 100:
                 x = np.arange(len(losses))
                 plt.plot(x, losses, label = "loss")
                 plt.title('loss of discriminator while pre-training')

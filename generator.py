@@ -631,10 +631,10 @@ class Generator(torch.nn.Module):
             #print('ad_loss(before division):', ad_loss)
                 
             ad_loss /= batch_size
-            #print('ad_loss(final):', ad_loss)
             
             self.optimizer.zero_grad()
             ad_loss.backward()
+            print('ad_loss(final):', ad_loss.item())
             if (i + 1) % self.log_every  == 0:
                 print('Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f} ---ad'.format(i + 1, num_steps, ad_loss.item(), np.exp(ad_loss.item()))) 
     
