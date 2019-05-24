@@ -95,7 +95,7 @@ class Discriminator(torch.nn.Module):
         return y_predicted
 
 
-    def fit(self, generator, dataloader, vocab, num_batches=None, alpha_c=1.0):
+    def fit(self, generator, dataloader, vocab, num_batches=None, alpha_c=1.0, losses=None):
 
         num_steps = len(dataloader)
 
@@ -133,6 +133,8 @@ class Discriminator(torch.nn.Module):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+            if losses is not None:
+                losses.append(loss.item())
 
             if step % self.log_every == 0:
                 print('Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(step, num_steps, loss.item(), np.exp(loss.item())))
