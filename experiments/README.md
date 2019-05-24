@@ -32,7 +32,6 @@ a man is parked at a train station .
 
 2. ![](cellphone.jpg)
 ```
-227549222_399485241b_z:
 a person is taking a picture of a cigarette .
 a person is holding a cell phone in his hand .
 a man is holding a cell phone .
