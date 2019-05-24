@@ -1,6 +1,7 @@
 import numpy as np
 import os
 from PIL import Image
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 from torchvision.models import resnet101
@@ -95,9 +96,10 @@ class Discriminator(torch.nn.Module):
         return y_predicted
 
 
-    def fit(self, generator, dataloader, vocab, num_batches=None, alpha_c=1.0, losses=None):
+    def fit(self, generator, dataloader, vocab, num_batches=None, alpha_c=1.0):
 
         num_steps = len(dataloader)
+        losses = list()
 
         for step, (imgs, captions, lengths) in enumerate(dataloader):
             imgs = imgs.to(device)
@@ -133,8 +135,17 @@ class Discriminator(torch.nn.Module):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
-            if losses is not None:
-                losses.append(loss.item())
+
+            # ----------------------------- Draw loss graph -----------------------
+            losses.append(loss.item())
+            if index == 500:
+                x = np.arange(len(losses))
+                plt.plot(x, losses, label = "loss")
+                plt.title('loss of discriminator while pre-training')
+                plt.legend()
+                plt.savefig('data/loss_pre_d.png')
+
+
 
             if step % self.log_every == 0:
                 print('Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(step, num_steps, loss.item(), np.exp(loss.item())))

@@ -51,13 +51,7 @@ def main(args):
         discriminator.fit(generator, dataloader, vocab)
         generator.pre_train(dataloader, vocab)
     elif args.train_mode == 'd':
-        losses = list()
         discriminator.fit(generator, dataloader, vocab)
-        x = np.arange(len(losses))
-        plt.plot(x, losses, label = "loss") 
-        plt.title('loss')
-        plt.legend() 
-        plt.savefig('loss_pre_d.png') 
 
     elif args.train_mode == 'g':
         generator.pre_train(dataloader, vocab)
