@@ -41,3 +41,14 @@ python sample.py
 + a giraffe standing in a giraffe standing in a field .
 + a giraffe standing in a giraffe standing next to a tree .
 
+## Scores
+8208 images, MSCOCO test images
+```
+Bleu_1: 0.381045
+Bleu_2: 0.223908
+Bleu_3: 0.139023
+Bleu_4: 0.090117
+METEOR: 0.152553
+ROUGE_L: 0.392893
+CIDEr: 0.680351
+```

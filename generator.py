@@ -372,13 +372,14 @@ class Generator(torch.nn.Module):
         self.optimizer = torch.optim.Adam(params=filter(lambda p: p.requires_grad, self.parameters()), lr=self.learning_rate_ad)
 
     
-    def pre_train(self, dataloader, vocab, alpha_c=1.0, losses=None):
+    def pre_train(self, dataloader, vocab, alpha_c=1.0):
         '''
             Pre-train discriminator based on data_loader
             losses: store loss to draw a graph
         '''
 
         num_steps = len(dataloader)
+        losses = list()
 
         for index, (imgs, captions, lengths) in enumerate(dataloader):
             imgs = imgs.to(device)
@@ -404,8 +405,15 @@ class Generator(torch.nn.Module):
             loss.backward()
             self.optimizer.step()
 
-            if losses is not None:
-                losses.append(loss.item())
+            # --------------------- draw losses graphs
+            losses.append(loss.item())
+            if index == 500:
+                x = np.arange(len(losses))
+                plt.plot(x, losses, label = "loss") 
+                plt.title('loss of generator while pre-training')
+                plt.legend() 
+                plt.savefig('data/loss_pre_g.png') 
+
 
             if index % self.log_every  == 0:
                 print('Step [{}/{}], Loss: {:.4f}, Perplexity: {:5.4f}'.format(index, num_steps, loss.item(), np.exp(loss.item()))) 

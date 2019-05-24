@@ -60,14 +60,7 @@ def main(args):
         plt.savefig('loss_pre_d.png') 
 
     elif args.train_mode == 'g':
-        losses = list()
-        generator.pre_train(dataloader, vocab, losses=losses)
-
-        x = np.arange(len(losses))
-        plt.plot(x, losses, label = "loss") 
-        plt.title('loss')
-        plt.legend() 
-        plt.savefig('loss_pre_g.png') 
+        generator.pre_train(dataloader, vocab)
 
 
         
