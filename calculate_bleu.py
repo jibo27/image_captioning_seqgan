@@ -90,7 +90,7 @@ def main(args):
 
     def write_to_file(dataloader, generator, num_batches):
         with open('data/hyp.txt', 'w') as hyp, open('data/ref.txt', 'w') as ref:
-            for index, (imgs, captions, lengths) in enumerate(dataloader):
+            for index, (imgs, captions, lengths) in tqdm.tqdm(enumerate(dataloader)):
                 imgs = imgs.to(device)
 
                 features = generator.encoder(imgs)
