@@ -30,7 +30,6 @@ def main(args):
 
     
     for filename in os.listdir(args.image_dir):
-
         fullname = os.path.join(args.image_dir, filename)
         print(fullname.split('/')[-1].split('.')[0] + ':')
         caption_set = set()
@@ -40,6 +39,7 @@ def main(args):
             max_iter -= 1
         for caption in caption_set:
             print(caption)
+
 
 if __name__ == '__main__':
     import argparse
