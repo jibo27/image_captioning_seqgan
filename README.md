@@ -29,13 +29,13 @@ python sample.py
 ```
 
 ## Inference
-![surf](data/surf.jpg)
+![surf](data/images/surf.jpg)
 
 + a person riding a wave in the ocean .
 + a person riding a wave on a wave .
 + a person riding a wave on a surfboard .
 
-![giraffe](data/giraffe.png)
+![giraffe](data/images/giraffe.png)
 
 + a giraffe standing in a giraffe standing in a field
 + a giraffe standing in a giraffe standing in a field .
